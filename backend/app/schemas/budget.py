@@ -1,12 +1,12 @@
 from pydantic import BaseModel
 from typing import Optional
+from datetime import date
 
 
 class BudgetBase(BaseModel):
     category_id: int
     amount: float
-    month: int
-    year: int
+    period_start: date
 
 
 class BudgetCreate(BudgetBase):
@@ -14,14 +14,15 @@ class BudgetCreate(BudgetBase):
 
 
 class BudgetUpdate(BaseModel):
+    category_id: Optional[int] = None
     amount: Optional[float] = None
-    month: Optional[int] = None
-    year: Optional[int] = None
+    period_start: Optional[date] = None
 
 
 class BudgetOut(BudgetBase):
     id: int
     user_id: int
+    period_end: Optional[date] = None
     spent: Optional[float] = None
 
     class Config:

@@ -35,7 +35,10 @@ def update_category(
     category = crud_category.get_category(db, current_user.id, category_id)
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
-    return crud_category.update_category(db, category, category_in)
+    try:
+        return crud_category.update_category(db, category, category_in)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.delete("/{category_id}", status_code=204)

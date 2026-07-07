@@ -1,8 +1,11 @@
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.models.account import Account
-from app.models.transaction import Transaction, TransactionType
+from app.models.transaction import Transaction
+from app.models.goal import Goal
+from app.models.enums import TransactionType
 from app.schemas.account import AccountCreate, AccountUpdate
 
 
@@ -31,15 +34,34 @@ def update_account(db: Session, account: Account, account_in: AccountUpdate):
 
 
 def delete_account(db: Session, account: Account):
+    is_transfer_destination = (
+        db.query(Transaction)
+        .filter(Transaction.destination_account_id == account.id)
+        .first()
+    )
+    if is_transfer_destination:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Não é possível remover uma conta que é destino de transferências existentes.",
+        )
+    db.query(Goal).filter(Goal.linked_account_id == account.id).update({Goal.linked_account_id: None})
     db.delete(account)
     db.commit()
 
 
+def _sum(db: Session, account_id: int, type: TransactionType, column="account_id") -> float:
+    filter_col = Transaction.account_id if column == "account_id" else Transaction.destination_account_id
+    return db.query(func.coalesce(func.sum(Transaction.amount), 0.0)).filter(
+        filter_col == account_id, Transaction.type == type
+    ).scalar()
+
+
 def compute_balance(db: Session, account: Account) -> float:
-    income = db.query(func.coalesce(func.sum(Transaction.amount), 0.0)).filter(
-        Transaction.account_id == account.id, Transaction.type == TransactionType.income
-    ).scalar()
-    expense = db.query(func.coalesce(func.sum(Transaction.amount), 0.0)).filter(
-        Transaction.account_id == account.id, Transaction.type == TransactionType.expense
-    ).scalar()
-    return round(account.initial_balance + income - expense, 2)
+    income = _sum(db, account.id, TransactionType.income)
+    expense = _sum(db, account.id, TransactionType.expense)
+    investment_out = _sum(db, account.id, TransactionType.investment)
+    transfer_out = _sum(db, account.id, TransactionType.transfer)
+    transfer_in = _sum(db, account.id, TransactionType.transfer, column="destination_account_id")
+    return round(
+        account.initial_balance + income - expense - investment_out - transfer_out + transfer_in, 2
+    )

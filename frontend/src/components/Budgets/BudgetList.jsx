@@ -1,10 +1,9 @@
-function formatCurrency(value) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0)
-}
+import { formatCurrency } from '../../utils/currency.js'
+import { formatPeriodLabel } from '../../utils/period.js'
 
-export default function BudgetList({ budgets, categories, onDelete }) {
+export default function BudgetList({ budgets, categories, onEdit, onDuplicate, onDelete }) {
   if (budgets.length === 0) {
-    return <p className="text-sm text-gray-400">Nenhum orcamento cadastrado.</p>
+    return <p className="text-sm text-gray-400">Nenhum orçamento cadastrado.</p>
   }
 
   const categoryName = (id) => categories.find((c) => c.id === id)?.name || '-'
@@ -19,11 +18,19 @@ export default function BudgetList({ budgets, categories, onDelete }) {
             <div className="flex justify-between items-start mb-2">
               <div>
                 <p className="font-semibold text-gray-900">{categoryName(b.category_id)}</p>
-                <p className="text-xs text-gray-400">{b.month}/{b.year}</p>
+                <p className="text-xs text-gray-400">{formatPeriodLabel({ start: b.period_start, end: b.period_end })}</p>
               </div>
-              <button onClick={() => onDelete(b.id)} className="text-xs text-red-500 hover:text-red-700">
-                Remover
-              </button>
+              <div className="flex gap-2">
+                <button onClick={() => onDuplicate(b)} className="text-xs text-gray-500 hover:text-gray-700">
+                  Duplicar
+                </button>
+                <button onClick={() => onEdit(b)} className="text-xs text-primary-600 hover:text-primary-700">
+                  Editar
+                </button>
+                <button onClick={() => onDelete(b.id)} className="text-xs text-red-500 hover:text-red-700">
+                  Remover
+                </button>
+              </div>
             </div>
             <div className="w-full bg-gray-100 rounded-full h-2 mt-3">
               <div

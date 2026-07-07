@@ -17,5 +17,9 @@ class User(Base):
 
     accounts = relationship("Account", back_populates="owner", cascade="all, delete-orphan")
     categories = relationship("Category", back_populates="owner", cascade="all, delete-orphan")
-    transactions = relationship("Transaction", back_populates="owner", cascade="all, delete-orphan")
+    transactions = relationship(
+        "Transaction", foreign_keys="Transaction.user_id", back_populates="owner", cascade="all, delete-orphan"
+    )
     budgets = relationship("Budget", back_populates="owner", cascade="all, delete-orphan")
+    investment_positions = relationship("InvestmentPosition", back_populates="owner", cascade="all, delete-orphan")
+    goals = relationship("Goal", back_populates="owner", cascade="all, delete-orphan")

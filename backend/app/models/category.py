@@ -1,13 +1,9 @@
-import enum
-from sqlalchemy import Column, Integer, String, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
-
-
-class CategoryType(str, enum.Enum):
-    income = "income"
-    expense = "expense"
+from app.models.enums import transaction_type_enum
 
 
 class Category(Base):
@@ -16,7 +12,8 @@ class Category(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     name = Column(String, nullable=False)
-    type = Column(Enum(CategoryType), nullable=False)
+    types = Column(ARRAY(transaction_type_enum), nullable=False, default=list)
+    is_salary = Column(Boolean, nullable=False, default=False)
     color = Column(String, default="#6366f1")
     icon = Column(String, default="tag")
 

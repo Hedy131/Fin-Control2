@@ -3,13 +3,14 @@ from typing import Optional
 from datetime import datetime
 
 from app.models.account import AccountType
+from app.models.currency import Currency
 
 
 class AccountBase(BaseModel):
     name: str
     type: AccountType = AccountType.checking
     initial_balance: float = 0.0
-    currency: str = "BRL"
+    currency: Currency = Currency.AOA
 
 
 class AccountCreate(AccountBase):
@@ -20,7 +21,7 @@ class AccountUpdate(BaseModel):
     name: Optional[str] = None
     type: Optional[AccountType] = None
     initial_balance: Optional[float] = None
-    currency: Optional[str] = None
+    currency: Optional[Currency] = None
 
 
 class AccountOut(AccountBase):

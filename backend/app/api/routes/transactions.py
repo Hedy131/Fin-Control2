@@ -6,7 +6,13 @@ from datetime import date
 from app.core.database import get_db
 from app.api.deps import get_current_user
 from app.models.user import User
-from app.schemas.transaction import TransactionCreate, TransactionUpdate, TransactionOut
+from app.models.enums import TransactionType
+from app.schemas.transaction import (
+    TransactionCreate,
+    TransactionUpdate,
+    TransactionOut,
+    TransactionsSummary,
+)
 from app.crud import transaction as crud_transaction
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
@@ -16,6 +22,8 @@ router = APIRouter(prefix="/transactions", tags=["transactions"])
 def list_transactions(
     account_id: Optional[int] = None,
     category_id: Optional[int] = None,
+    type: Optional[TransactionType] = None,
+    search: Optional[str] = None,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
     skip: int = 0,
@@ -24,8 +32,25 @@ def list_transactions(
     db: Session = Depends(get_db),
 ):
     return crud_transaction.get_transactions(
-        db, current_user.id, account_id, category_id, start_date, end_date, skip, limit
+        db, current_user.id, account_id, category_id, type, search, start_date, end_date, skip, limit
     )
+
+
+@router.get("/summary", response_model=TransactionsSummary)
+def get_transactions_summary(
+    account_id: Optional[int] = None,
+    category_id: Optional[int] = None,
+    type: Optional[TransactionType] = None,
+    search: Optional[str] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    by_currency = crud_transaction.get_transactions_summary(
+        db, current_user.id, account_id, category_id, type, search, start_date, end_date
+    )
+    return {"by_currency": by_currency}
 
 
 @router.post("/", response_model=TransactionOut, status_code=201)
@@ -34,7 +59,10 @@ def create_transaction(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return crud_transaction.create_transaction(db, current_user.id, transaction_in)
+    try:
+        return crud_transaction.create_transaction(db, current_user.id, transaction_in)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/{transaction_id}", response_model=TransactionOut)
@@ -55,7 +83,10 @@ def update_transaction(
     transaction = crud_transaction.get_transaction(db, current_user.id, transaction_id)
     if not transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
-    return crud_transaction.update_transaction(db, transaction, transaction_in)
+    try:
+        return crud_transaction.update_transaction(db, transaction, transaction_in)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.delete("/{transaction_id}", status_code=204)

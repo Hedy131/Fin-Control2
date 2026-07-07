@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { listAccounts, createAccount, deleteAccount } from '../api/accounts.js'
+import { listAccounts, createAccount, updateAccount, deleteAccount } from '../api/accounts.js'
 import AccountForm from '../components/Accounts/AccountForm.jsx'
 import AccountList from '../components/Accounts/AccountList.jsx'
 import Loading from '../components/Common/Loading.jsx'
@@ -8,6 +8,7 @@ export default function Accounts() {
   const [accounts, setAccounts] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [editingAccount, setEditingAccount] = useState(null)
 
   function refresh() {
     setLoading(true)
@@ -22,8 +23,14 @@ export default function Accounts() {
     refresh()
   }
 
+  async function handleUpdate(payload) {
+    await updateAccount(editingAccount.id, payload)
+    setEditingAccount(null)
+    refresh()
+  }
+
   async function handleDelete(id) {
-    if (!confirm('Remover esta conta e todas as suas transacoes?')) return
+    if (!confirm('Remover esta conta e todas as suas transações?')) return
     await deleteAccount(id)
     refresh()
   }
@@ -34,7 +41,13 @@ export default function Accounts() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-900">Contas</h2>
-        <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 text-sm rounded-lg bg-primary-600 text-white">
+        <button
+          onClick={() => {
+            setEditingAccount(null)
+            setShowForm(!showForm)
+          }}
+          className="px-4 py-2 text-sm rounded-lg bg-primary-600 text-white"
+        >
           {showForm ? 'Fechar' : 'Nova Conta'}
         </button>
       </div>
@@ -43,7 +56,16 @@ export default function Accounts() {
           <AccountForm onSubmit={handleCreate} onCancel={() => setShowForm(false)} />
         </div>
       )}
-      <AccountList accounts={accounts} onDelete={handleDelete} />
+      {editingAccount && (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 max-w-md">
+          <AccountForm
+            initialValues={editingAccount}
+            onSubmit={handleUpdate}
+            onCancel={() => setEditingAccount(null)}
+          />
+        </div>
+      )}
+      <AccountList accounts={accounts} onEdit={setEditingAccount} onDelete={handleDelete} />
     </div>
   )
 }

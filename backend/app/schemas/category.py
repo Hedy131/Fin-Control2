@@ -1,14 +1,23 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, model_validator
+from typing import List, Optional
 
-from app.models.category import CategoryType
+from app.models.enums import TransactionType
 
 
 class CategoryBase(BaseModel):
     name: str
-    type: CategoryType
+    types: List[TransactionType]
+    is_salary: bool = False
     color: str = "#6366f1"
     icon: str = "tag"
+
+    @model_validator(mode="after")
+    def check_types_and_salary_flag(self):
+        if not self.types:
+            raise ValueError("a categoria precisa de pelo menos um tipo")
+        if self.is_salary and TransactionType.income not in self.types:
+            raise ValueError("is_salary requer que 'income' esteja entre os tipos da categoria")
+        return self
 
 
 class CategoryCreate(CategoryBase):
@@ -17,7 +26,8 @@ class CategoryCreate(CategoryBase):
 
 class CategoryUpdate(BaseModel):
     name: Optional[str] = None
-    type: Optional[CategoryType] = None
+    types: Optional[List[TransactionType]] = None
+    is_salary: Optional[bool] = None
     color: Optional[str] = None
     icon: Optional[str] = None
 

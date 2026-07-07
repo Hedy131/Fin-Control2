@@ -2,10 +2,12 @@ import { NavLink } from 'react-router-dom'
 
 const links = [
   { to: '/', label: 'Painel', end: true },
-  { to: '/transactions', label: 'Transacoes' },
+  { to: '/transactions', label: 'Transações' },
   { to: '/accounts', label: 'Contas' },
   { to: '/categories', label: 'Categorias' },
-  { to: '/budgets', label: 'Orcamentos' },
+  { to: '/budgets', label: 'Orçamentos' },
+  { to: '/investimentos', label: 'Investimentos' },
+  { to: '/metas', label: 'Metas' },
 ]
 
 export default function Sidebar() {

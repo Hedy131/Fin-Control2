@@ -2,7 +2,7 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 
 export default function ExpenseChart({ data }) {
   if (!data || data.length === 0) {
-    return <p className="text-sm text-gray-400">Sem despesas categorizadas neste mes.</p>
+    return <p className="text-sm text-gray-400">Sem despesas categorizadas neste período.</p>
   }
 
   return (

@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.core.database import Base
+from app.models.currency import Currency
 
 
 class AccountType(str, enum.Enum):
@@ -22,8 +23,13 @@ class Account(Base):
     name = Column(String, nullable=False)
     type = Column(Enum(AccountType), default=AccountType.checking, nullable=False)
     initial_balance = Column(Float, default=0.0)
-    currency = Column(String, default="BRL")
+    currency = Column(Enum(Currency), default=Currency.AOA, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     owner = relationship("User", back_populates="accounts")
-    transactions = relationship("Transaction", back_populates="account", cascade="all, delete-orphan")
+    transactions = relationship(
+        "Transaction",
+        foreign_keys="Transaction.account_id",
+        back_populates="account",
+        cascade="all, delete-orphan",
+    )

@@ -13,7 +13,7 @@ export default function Dashboard() {
   useEffect(() => {
     getSummary()
       .then(setSummary)
-      .catch(() => setError('Nao foi possivel carregar o painel.'))
+      .catch(() => setError('Não foi possível carregar o painel.'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -27,12 +27,12 @@ export default function Dashboard() {
       <SummaryCards summary={summary} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Despesas por Categoria (mes atual)</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">Despesas por Categoria (período atual)</h3>
           <ExpenseChart data={summary.expenses_by_category} />
         </div>
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Receitas x Despesas (6 meses)</h3>
-          <IncomeExpenseChart data={summary.monthly_trend} />
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">Receitas x Despesas (6 períodos)</h3>
+          <IncomeExpenseChart data={summary.period_trend} />
         </div>
       </div>
     </div>

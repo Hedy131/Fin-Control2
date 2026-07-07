@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
+from datetime import date
 
 
 class CategorySummary(BaseModel):
@@ -9,18 +10,25 @@ class CategorySummary(BaseModel):
     total: float
 
 
-class MonthlySummary(BaseModel):
-    month: int
-    year: int
-    income: float
-    expense: float
-    balance: float
+class CurrencyBalance(BaseModel):
+    currency: str
+    total: float
+
+
+class PeriodSummary(BaseModel):
+    period_start: date
+    period_end: Optional[date] = None
+    income_by_currency: List[CurrencyBalance]
+    expense_by_currency: List[CurrencyBalance]
+    balance_by_currency: List[CurrencyBalance]
 
 
 class DashboardSummary(BaseModel):
-    total_balance: float
-    month_income: float
-    month_expense: float
-    month_balance: float
+    total_balance_by_currency: List[CurrencyBalance]
+    period_start: date
+    period_end: Optional[date] = None
+    period_income_by_currency: List[CurrencyBalance]
+    period_expense_by_currency: List[CurrencyBalance]
+    period_balance_by_currency: List[CurrencyBalance]
     expenses_by_category: List[CategorySummary]
-    monthly_trend: List[MonthlySummary]
+    period_trend: List[PeriodSummary]

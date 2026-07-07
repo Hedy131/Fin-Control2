@@ -1,28 +1,22 @@
-function formatCurrency(value) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0)
-}
+import { formatCurrency } from '../../utils/currency.js'
+import { TYPE_COLOR } from '../../utils/categoryTypes.js'
 
-const TYPE_COLOR = {
-  income: 'text-green-600',
-  expense: 'text-red-600',
-  transfer: 'text-gray-600',
-}
-
-export default function TransactionList({ transactions, accounts, categories, onDelete }) {
+export default function TransactionList({ transactions, accounts, categories, onEdit, onDuplicate, onDelete }) {
   if (transactions.length === 0) {
-    return <p className="text-sm text-gray-400">Nenhuma transacao encontrada.</p>
+    return <p className="text-sm text-gray-400">Nenhuma transação encontrada.</p>
   }
 
-  const accountName = (id) => accounts.find((a) => a.id === id)?.name || '-'
+  const account = (id) => accounts.find((a) => a.id === id)
+  const accountName = (id) => account(id)?.name || '-'
   const categoryName = (id) => categories.find((c) => c.id === id)?.name || '-'
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
           <tr>
             <th className="text-left px-4 py-3">Data</th>
-            <th className="text-left px-4 py-3">Descricao</th>
+            <th className="text-left px-4 py-3">Descrição</th>
             <th className="text-left px-4 py-3">Conta</th>
             <th className="text-left px-4 py-3">Categoria</th>
             <th className="text-right px-4 py-3">Valor</th>
@@ -30,22 +24,42 @@ export default function TransactionList({ transactions, accounts, categories, on
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {transactions.map((t) => (
-            <tr key={t.id}>
-              <td className="px-4 py-3 text-gray-600">{t.date}</td>
-              <td className="px-4 py-3 text-gray-900">{t.description || '-'}</td>
-              <td className="px-4 py-3 text-gray-600">{accountName(t.account_id)}</td>
-              <td className="px-4 py-3 text-gray-600">{categoryName(t.category_id)}</td>
-              <td className={`px-4 py-3 text-right font-medium ${TYPE_COLOR[t.type]}`}>
-                {t.type === 'expense' ? '-' : ''}{formatCurrency(t.amount)}
-              </td>
-              <td className="px-4 py-3 text-right">
-                <button onClick={() => onDelete(t.id)} className="text-xs text-red-500 hover:text-red-700">
-                  Remover
-                </button>
-              </td>
-            </tr>
-          ))}
+          {transactions.map((t) => {
+            const src = account(t.account_id)
+            return (
+              <tr key={t.id}>
+                <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                  {t.date}
+                  {t.time && <span className="text-gray-400"> {t.time.slice(0, 5)}</span>}
+                </td>
+                <td className="px-4 py-3 text-gray-900">
+                  {t.description || '-'}
+                  {t.type === 'transfer' && (
+                    <span className="block text-xs text-gray-400">
+                      → {accountName(t.destination_account_id)}
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-gray-600">{accountName(t.account_id)}</td>
+                <td className="px-4 py-3 text-gray-600">{categoryName(t.category_id)}</td>
+                <td className={`px-4 py-3 text-right font-medium whitespace-nowrap ${TYPE_COLOR[t.type]}`}>
+                  {t.type === 'expense' || t.type === 'investment' ? '-' : ''}
+                  {formatCurrency(t.amount, src?.currency)}
+                </td>
+                <td className="px-4 py-3 text-right whitespace-nowrap">
+                  <button onClick={() => onDuplicate(t)} className="text-xs text-gray-500 hover:text-gray-700 mr-3">
+                    Duplicar
+                  </button>
+                  <button onClick={() => onEdit(t)} className="text-xs text-primary-600 hover:text-primary-700 mr-3">
+                    Editar
+                  </button>
+                  <button onClick={() => onDelete(t.id)} className="text-xs text-red-500 hover:text-red-700">
+                    Remover
+                  </button>
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
     </div>
