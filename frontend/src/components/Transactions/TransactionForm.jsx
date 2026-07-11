@@ -6,11 +6,10 @@ function nowTime() {
   return new Date().toTimeString().slice(0, 5)
 }
 
-export default function TransactionForm({ accounts, categories, investmentPositions = [], initialValues, onSubmit, onCancel }) {
+export default function TransactionForm({ accounts, categories, initialValues, onSubmit, onCancel }) {
   const [accountId, setAccountId] = useState(initialValues?.account_id ?? accounts[0]?.id ?? '')
   const [destinationAccountId, setDestinationAccountId] = useState(initialValues?.destination_account_id ?? '')
   const [categoryId, setCategoryId] = useState(initialValues?.category_id ?? '')
-  const [investmentPositionId, setInvestmentPositionId] = useState(initialValues?.investment_position_id ?? '')
   const [type, setType] = useState(initialValues?.type || 'expense')
   const [amount, setAmount] = useState(initialValues?.amount ?? 0)
   const [description, setDescription] = useState(initialValues?.description || '')
@@ -21,7 +20,6 @@ export default function TransactionForm({ accounts, categories, investmentPositi
     setType(nextType)
     setCategoryId('')
     if (nextType !== 'transfer') setDestinationAccountId('')
-    if (nextType !== 'investment') setInvestmentPositionId('')
   }
 
   function handleSubmit(e) {
@@ -30,7 +28,6 @@ export default function TransactionForm({ accounts, categories, investmentPositi
       account_id: parseInt(accountId, 10),
       destination_account_id: type === 'transfer' && destinationAccountId ? parseInt(destinationAccountId, 10) : null,
       category_id: categoryId ? parseInt(categoryId, 10) : null,
-      investment_position_id: type === 'investment' && investmentPositionId ? parseInt(investmentPositionId, 10) : null,
       type,
       amount: amount || 0,
       description,
@@ -89,17 +86,6 @@ export default function TransactionForm({ accounts, categories, investmentPositi
           ))}
         </select>
       </div>
-      {type === 'investment' && investmentPositions.length > 0 && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Posição de Investimento</label>
-          <select value={investmentPositionId} onChange={(e) => setInvestmentPositionId(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-            <option value="">Nenhuma</option>
-            {investmentPositions.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-        </div>
-      )}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Valor</label>
         <CurrencyInput required value={amount} onChange={setAmount} />

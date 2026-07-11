@@ -1,86 +1,100 @@
 import { useState } from 'react'
 import CurrencyInput from '../Common/CurrencyInput.jsx'
-import { formatCurrency } from '../../utils/currency.js'
+import { formatCurrency, CURRENCIES } from '../../utils/currency.js'
 
-function QuickUpdateProgress({ goal, onUpdateProgress }) {
-  const [editing, setEditing] = useState(false)
-  const [value, setValue] = useState(goal.manual_current_amount || 0)
+function GoalCard({ goal, category, accounts, onSave }) {
+  const [targetAmount, setTargetAmount] = useState(goal.target_amount)
+  const [initialAmount, setInitialAmount] = useState(goal.initial_amount)
+  const over = goal.days_remaining !== null && goal.days_remaining !== undefined && goal.days_remaining < 0
 
-  if (goal.linked_account_id) return null
+  function saveTargetAmount() {
+    if (targetAmount !== goal.target_amount) onSave(goal.id, { target_amount: targetAmount || 0 })
+  }
 
-  if (!editing) {
-    return (
-      <button onClick={() => setEditing(true)} className="text-xs text-primary-600 hover:text-primary-700">
-        Atualizar progresso
-      </button>
-    )
+  function saveInitialAmount() {
+    if (initialAmount !== goal.initial_amount) onSave(goal.id, { initial_amount: initialAmount || 0 })
   }
 
   return (
-    <div className="flex items-center gap-2 mt-2">
-      <CurrencyInput value={value} onChange={setValue} className="w-28 rounded-lg border border-gray-300 px-2 py-1 text-xs" />
-      <button
-        onClick={() => {
-          onUpdateProgress(goal.id, value)
-          setEditing(false)
-        }}
-        className="text-xs text-primary-600 hover:text-primary-700"
-      >
-        Guardar
-      </button>
-      <button onClick={() => setEditing(false)} className="text-xs text-gray-500 hover:text-gray-700">
-        Cancelar
-      </button>
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: category?.color || '#6366f1' }} />
+        <p className="font-semibold text-gray-900">{category?.name || '-'}</p>
+      </div>
+      <div className="w-full bg-gray-100 rounded-full h-2 mb-2">
+        <div className="h-2 rounded-full bg-primary-500" style={{ width: `${Math.min(100, goal.progress_pct || 0)}%` }} />
+      </div>
+      <p className="text-sm text-gray-600">
+        {formatCurrency(goal.progress, goal.currency)} de {formatCurrency(goal.target_amount, goal.currency)}
+        <span className="text-gray-400"> ({goal.progress_pct}%)</span>
+      </p>
+      {goal.days_remaining !== null && goal.days_remaining !== undefined && (
+        <p className={`text-xs mt-1 ${over ? 'text-red-600' : 'text-gray-400'}`}>
+          {over ? 'Prazo ultrapassado' : `${goal.days_remaining} dias restantes`}
+        </p>
+      )}
+      <div className="grid grid-cols-2 gap-2 mt-3">
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Valor Alvo</label>
+          <CurrencyInput value={targetAmount} onChange={setTargetAmount} onBlur={saveTargetAmount} />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Moeda</label>
+          <select
+            value={goal.currency}
+            onChange={(e) => onSave(goal.id, { currency: e.target.value })}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          >
+            {CURRENCIES.map((c) => (
+              <option key={c.code} value={c.code}>{c.code}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div className="mt-2">
+        <label className="block text-xs font-medium text-gray-500 mb-1">Prazo</label>
+        <input
+          type="date"
+          value={goal.target_date || ''}
+          onChange={(e) => onSave(goal.id, { target_date: e.target.value || null })}
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+        />
+      </div>
+      <div className="mt-2">
+        <label className="block text-xs font-medium text-gray-500 mb-1">Conta Dedicada</label>
+        <select
+          value={goal.linked_account_id || ''}
+          onChange={(e) => onSave(goal.id, { linked_account_id: e.target.value ? parseInt(e.target.value, 10) : null })}
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+        >
+          <option value="">Nenhuma — usar transações desta categoria</option>
+          {accounts.map((a) => (
+            <option key={a.id} value={a.id}>{a.name}</option>
+          ))}
+        </select>
+      </div>
+      {!goal.linked_account_id && (
+        <div className="mt-2">
+          <label className="block text-xs font-medium text-gray-500 mb-1">Valor Inicial (antes das transações)</label>
+          <CurrencyInput value={initialAmount} onChange={setInitialAmount} onBlur={saveInitialAmount} />
+        </div>
+      )}
     </div>
   )
 }
 
-export default function GoalList({ goals, onEdit, onUpdateProgress, onDelete }) {
+export default function GoalList({ goals, categories, accounts, onSave }) {
   if (goals.length === 0) {
-    return <p className="text-sm text-gray-400">Nenhuma meta cadastrada.</p>
+    return <p className="text-sm text-gray-400">Nenhuma categoria de poupança cadastrada ainda.</p>
   }
+
+  const categoryFor = (id) => categories.find((c) => c.id === id)
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {goals.map((g) => {
-        const over = g.days_remaining !== null && g.days_remaining !== undefined && g.days_remaining < 0
-        return (
-          <div key={g.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: g.color }} />
-                <p className="font-semibold text-gray-900">{g.name}</p>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => onEdit(g)} className="text-xs text-primary-600 hover:text-primary-700">
-                  Editar
-                </button>
-                <button onClick={() => onDelete(g.id)} className="text-xs text-red-500 hover:text-red-700">
-                  Remover
-                </button>
-              </div>
-            </div>
-            <div className="w-full bg-gray-100 rounded-full h-2 mt-3">
-              <div
-                className="h-2 rounded-full bg-primary-500"
-                style={{ width: `${Math.min(100, g.progress_pct || 0)}%` }}
-              />
-            </div>
-            <p className="text-sm text-gray-600 mt-2">
-              {formatCurrency(g.progress, g.currency)} de {formatCurrency(g.target_amount, g.currency)}
-              <span className="text-gray-400"> ({g.progress_pct}%)</span>
-            </p>
-            {g.days_remaining !== null && g.days_remaining !== undefined && (
-              <p className={`text-xs mt-1 ${over ? 'text-red-600' : 'text-gray-400'}`}>
-                {over ? 'Prazo ultrapassado' : `${g.days_remaining} dias restantes`}
-              </p>
-            )}
-            <div className="mt-2">
-              <QuickUpdateProgress goal={g} onUpdateProgress={onUpdateProgress} />
-            </div>
-          </div>
-        )
-      })}
+      {goals.map((g) => (
+        <GoalCard key={g.id} goal={g} category={categoryFor(g.category_id)} accounts={accounts} onSave={onSave} />
+      ))}
     </div>
   )
 }

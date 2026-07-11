@@ -21,6 +21,10 @@ export default function FilterSummary({ byCurrency }) {
               <span className="text-gray-500">Investimentos</span>
               <span className="text-blue-600 font-medium">{formatCurrency(row.investment, row.currency)}</span>
             </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Poupanças</span>
+              <span className="text-emerald-600 font-medium">{formatCurrency(row.savings, row.currency)}</span>
+            </div>
             <div className="flex justify-between pt-1 border-t border-gray-100">
               <span className="text-gray-700 font-medium">Saldo</span>
               <span className={`font-bold ${row.balance >= 0 ? 'text-green-700' : 'text-red-700'}`}>

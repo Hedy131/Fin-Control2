@@ -16,7 +16,6 @@ class Transaction(Base):
     account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
     destination_account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True)
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
-    investment_position_id = Column(Integer, ForeignKey("investment_positions.id"), nullable=True)
     type = Column(transaction_type_enum, nullable=False)
     amount = Column(Float, nullable=False)
     description = Column(String, nullable=True)
@@ -28,4 +27,3 @@ class Transaction(Base):
     account = relationship("Account", foreign_keys=[account_id], back_populates="transactions")
     destination_account = relationship("Account", foreign_keys=[destination_account_id])
     category = relationship("Category", back_populates="transactions")
-    investment_position = relationship("InvestmentPosition", back_populates="transactions")

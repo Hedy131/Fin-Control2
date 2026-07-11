@@ -9,7 +9,6 @@ class TransactionBase(BaseModel):
     account_id: int
     destination_account_id: Optional[int] = None
     category_id: Optional[int] = None
-    investment_position_id: Optional[int] = None
     type: TransactionType
     amount: float
     description: Optional[str] = None
@@ -36,7 +35,6 @@ class TransactionUpdate(BaseModel):
     account_id: Optional[int] = None
     destination_account_id: Optional[int] = None
     category_id: Optional[int] = None
-    investment_position_id: Optional[int] = None
     type: Optional[TransactionType] = None
     amount: Optional[float] = None
     description: Optional[str] = None
@@ -59,6 +57,7 @@ class CurrencyTotals(BaseModel):
     expense: float = 0
     investment: float = 0
     transfer: float = 0
+    savings: float = 0
     balance: float = 0
 
 

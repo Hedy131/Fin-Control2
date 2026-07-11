@@ -60,8 +60,16 @@ def compute_balance(db: Session, account: Account) -> float:
     income = _sum(db, account.id, TransactionType.income)
     expense = _sum(db, account.id, TransactionType.expense)
     investment_out = _sum(db, account.id, TransactionType.investment)
+    savings_out = _sum(db, account.id, TransactionType.savings)
     transfer_out = _sum(db, account.id, TransactionType.transfer)
     transfer_in = _sum(db, account.id, TransactionType.transfer, column="destination_account_id")
     return round(
-        account.initial_balance + income - expense - investment_out - transfer_out + transfer_in, 2
+        account.initial_balance
+        + income
+        - expense
+        - investment_out
+        - savings_out
+        - transfer_out
+        + transfer_in,
+        2,
     )

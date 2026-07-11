@@ -17,8 +17,20 @@ DEFAULT_CATEGORIES = [
     ("Saude", [TransactionType.expense], False, "#06b6d4", "heart"),
     ("Lazer", [TransactionType.expense], False, "#8b5cf6", "smile"),
     ("Educacao", [TransactionType.expense], False, "#3b82f6", "book"),
-    ("Investimentos", [TransactionType.investment], False, "#0ea5e9", "trending-up"),
     ("Levantamento", [TransactionType.transfer], False, "#64748b", "arrow-right-left"),
+    ("ETF (Kz)", [TransactionType.investment], False, "#0ea5e9", "trending-up"),
+    ("ETF ($)", [TransactionType.investment], False, "#0ea5e9", "trending-up"),
+    ("Acoes (Kz)", [TransactionType.investment], False, "#0284c7", "trending-up"),
+    ("Acoes ($)", [TransactionType.investment], False, "#0284c7", "trending-up"),
+    ("OTNR (Kz)", [TransactionType.investment], False, "#0369a1", "landmark"),
+    ("OTNR ($)", [TransactionType.investment], False, "#0369a1", "landmark"),
+    ("Deposito a Prazo (Kz)", [TransactionType.investment], False, "#075985", "piggy-bank"),
+    ("Deposito a Prazo ($)", [TransactionType.investment], False, "#075985", "piggy-bank"),
+    ("Fundo de Emergencia", [TransactionType.savings], False, "#22c55e", "shield"),
+    ("Viagem", [TransactionType.savings], False, "#3b82f6", "plane"),
+    ("Carro", [TransactionType.savings], False, "#f97316", "car"),
+    ("Casa", [TransactionType.savings], False, "#eab308", "home"),
+    ("Casamento", [TransactionType.savings], False, "#ec4899", "heart"),
 ]
 
 

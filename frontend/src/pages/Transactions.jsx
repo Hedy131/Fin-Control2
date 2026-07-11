@@ -8,7 +8,6 @@ import {
 } from '../api/transactions.js'
 import { listAccounts } from '../api/accounts.js'
 import { listCategories } from '../api/categories.js'
-import { listInvestmentPositions } from '../api/investments.js'
 import { listPeriods } from '../api/periods.js'
 import TransactionForm from '../components/Transactions/TransactionForm.jsx'
 import TransactionList from '../components/Transactions/TransactionList.jsx'
@@ -32,7 +31,6 @@ export default function Transactions() {
   const [summary, setSummary] = useState([])
   const [accounts, setAccounts] = useState([])
   const [categories, setCategories] = useState([])
-  const [investmentPositions, setInvestmentPositions] = useState([])
   const [periods, setPeriods] = useState([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(EMPTY_FILTERS)
@@ -58,11 +56,10 @@ export default function Transactions() {
 
   useEffect(() => {
     setLoading(true)
-    Promise.all([listAccounts(), listCategories(), listInvestmentPositions(), listPeriods(12)])
-      .then(([a, c, i, p]) => {
+    Promise.all([listAccounts(), listCategories(), listPeriods(12)])
+      .then(([a, c, p]) => {
         setAccounts(a)
         setCategories(c)
-        setInvestmentPositions(i)
         setPeriods(p)
       })
       .finally(() => setLoading(false))
@@ -142,7 +139,6 @@ export default function Transactions() {
           <TransactionForm
             accounts={accounts}
             categories={categories}
-            investmentPositions={investmentPositions}
             initialValues={formInitialValues}
             onSubmit={handleSubmit}
             onCancel={closeForm}

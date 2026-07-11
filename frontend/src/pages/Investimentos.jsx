@@ -1,11 +1,6 @@
 import { useEffect, useState } from 'react'
-import {
-  listInvestmentPositions,
-  createInvestmentPosition,
-  updateInvestmentPosition,
-  deleteInvestmentPosition,
-} from '../api/investments.js'
-import InvestmentForm from '../components/Investments/InvestmentForm.jsx'
+import { listInvestmentPositions, updateInvestmentPosition } from '../api/investments.js'
+import { listCategories } from '../api/categories.js'
 import InvestmentList from '../components/Investments/InvestmentList.jsx'
 import AllocationChart from '../components/Investments/AllocationChart.jsx'
 import TotalsBar from '../components/Investments/TotalsBar.jsx'
@@ -13,37 +8,23 @@ import Loading from '../components/Common/Loading.jsx'
 
 export default function Investimentos() {
   const [positions, setPositions] = useState([])
+  const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [editingPosition, setEditingPosition] = useState(null)
 
   function refresh() {
     setLoading(true)
-    listInvestmentPositions().then(setPositions).finally(() => setLoading(false))
+    Promise.all([listInvestmentPositions(), listCategories()])
+      .then(([p, c]) => {
+        setPositions(p)
+        setCategories(c)
+      })
+      .finally(() => setLoading(false))
   }
 
   useEffect(refresh, [])
 
-  async function handleCreate(payload) {
-    await createInvestmentPosition(payload)
-    setShowForm(false)
-    refresh()
-  }
-
-  async function handleUpdate(payload) {
-    await updateInvestmentPosition(editingPosition.id, payload)
-    setEditingPosition(null)
-    refresh()
-  }
-
-  async function handleUpdateValue(id, currentValue) {
-    await updateInvestmentPosition(id, { current_value: currentValue })
-    refresh()
-  }
-
-  async function handleDelete(id) {
-    if (!confirm('Remover esta posição de investimento?')) return
-    await deleteInvestmentPosition(id)
+  async function handleSave(id, payload) {
+    await updateInvestmentPosition(id, payload)
     refresh()
   }
 
@@ -51,45 +32,23 @@ export default function Investimentos() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">Investimentos</h2>
-        <button
-          onClick={() => {
-            setEditingPosition(null)
-            setShowForm(!showForm)
-          }}
-          className="px-4 py-2 text-sm rounded-lg bg-primary-600 text-white"
-        >
-          {showForm ? 'Fechar' : 'Novo Investimento'}
-        </button>
-      </div>
-      {showForm && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 max-w-md">
-          <InvestmentForm onSubmit={handleCreate} onCancel={() => setShowForm(false)} />
-        </div>
+      <h2 className="text-xl font-bold text-gray-900">Investimentos</h2>
+      {categories.filter((c) => c.types.includes('investment')).length === 0 && (
+        <p className="text-sm text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+          Cadastre uma categoria de investimento (em Categorias) para ela aparecer aqui.
+        </p>
       )}
-      {editingPosition && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 max-w-md">
-          <InvestmentForm
-            initialValues={editingPosition}
-            onSubmit={handleUpdate}
-            onCancel={() => setEditingPosition(null)}
-          />
-        </div>
-      )}
+      <p className="text-xs text-gray-400">
+        As posições vêm das categorias de investimento e das transações lançadas nelas — para investir, lance uma transação em Transações.
+      </p>
       <TotalsBar positions={positions} />
       {positions.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Alocação por Tipo</h3>
-          <AllocationChart positions={positions} />
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">Alocação por Categoria</h3>
+          <AllocationChart positions={positions} categories={categories} />
         </div>
       )}
-      <InvestmentList
-        positions={positions}
-        onEdit={setEditingPosition}
-        onUpdateValue={handleUpdateValue}
-        onDelete={handleDelete}
-      />
+      <InvestmentList positions={positions} categories={categories} onSave={handleSave} />
     </div>
   )
 }

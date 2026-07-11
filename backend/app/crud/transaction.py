@@ -9,7 +9,6 @@ from app.models.category import Category
 from app.models.account import Account
 from app.models.enums import TransactionType
 from app.schemas.transaction import TransactionCreate, TransactionUpdate
-from app.crud.investment import adjust_invested_amount
 
 
 def validate_transaction_category(db: Session, category_id: Optional[int], type: TransactionType) -> None:
@@ -101,7 +100,8 @@ def get_transactions_summary(
         currency_key = currency.value if hasattr(currency, "value") else currency
         type_key = ttype.value if hasattr(ttype, "value") else ttype
         bucket = totals.setdefault(
-            currency_key, {"income": 0.0, "expense": 0.0, "investment": 0.0, "transfer": 0.0}
+            currency_key,
+            {"income": 0.0, "expense": 0.0, "investment": 0.0, "transfer": 0.0, "savings": 0.0},
         )
         bucket[type_key] = bucket.get(type_key, 0.0) + (amount or 0.0)
 
@@ -114,6 +114,7 @@ def get_transactions_summary(
                 "expense": round(bucket["expense"], 2),
                 "investment": round(bucket["investment"], 2),
                 "transfer": round(bucket["transfer"], 2),
+                "savings": round(bucket["savings"], 2),
                 "balance": round(bucket["income"] - bucket["expense"], 2),
             }
         )
@@ -135,10 +136,6 @@ def create_transaction(db: Session, user_id: int, transaction_in: TransactionCre
     db.add(transaction)
     db.commit()
     db.refresh(transaction)
-
-    if transaction.type == TransactionType.investment and transaction.investment_position_id:
-        adjust_invested_amount(db, transaction.investment_position_id, transaction.amount)
-
     return transaction
 
 
@@ -155,25 +152,13 @@ def update_transaction(db: Session, transaction: Transaction, transaction_in: Tr
     validate_transaction_category(db, effective_category_id, effective_type)
     _validate_transfer_fields(effective_type, effective_account_id, effective_destination_id)
 
-    old_type = transaction.type
-    old_position_id = transaction.investment_position_id
-    old_amount = transaction.amount
-    if old_type == TransactionType.investment and old_position_id:
-        adjust_invested_amount(db, old_position_id, -old_amount)
-
     for field, value in updates.items():
         setattr(transaction, field, value)
     db.commit()
     db.refresh(transaction)
-
-    if transaction.type == TransactionType.investment and transaction.investment_position_id:
-        adjust_invested_amount(db, transaction.investment_position_id, transaction.amount)
-
     return transaction
 
 
 def delete_transaction(db: Session, transaction: Transaction):
-    if transaction.type == TransactionType.investment and transaction.investment_position_id:
-        adjust_invested_amount(db, transaction.investment_position_id, -transaction.amount)
     db.delete(transaction)
     db.commit()

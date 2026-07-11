@@ -43,7 +43,7 @@ export default function TransactionList({ transactions, accounts, categories, on
                 <td className="px-4 py-3 text-gray-600">{accountName(t.account_id)}</td>
                 <td className="px-4 py-3 text-gray-600">{categoryName(t.category_id)}</td>
                 <td className={`px-4 py-3 text-right font-medium whitespace-nowrap ${TYPE_COLOR[t.type]}`}>
-                  {t.type === 'expense' || t.type === 'investment' ? '-' : ''}
+                  {['expense', 'investment', 'savings'].includes(t.type) ? '-' : ''}
                   {formatCurrency(t.amount, src?.currency)}
                 </td>
                 <td className="px-4 py-3 text-right whitespace-nowrap">

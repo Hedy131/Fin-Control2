@@ -1,113 +1,67 @@
-import { useEffect, useState } from 'react'
-import { listBudgets, createBudget, updateBudget, deleteBudget } from '../api/budgets.js'
+import { useEffect, useState, useCallback } from 'react'
+import { listBudgets, updateBudget } from '../api/budgets.js'
 import { listCategories } from '../api/categories.js'
 import { listPeriods } from '../api/periods.js'
-import BudgetForm from '../components/Budgets/BudgetForm.jsx'
 import BudgetList from '../components/Budgets/BudgetList.jsx'
 import Loading from '../components/Common/Loading.jsx'
+import { formatPeriodLabel } from '../utils/period.js'
 
 export default function Budgets() {
   const [budgets, setBudgets] = useState([])
   const [categories, setCategories] = useState([])
   const [periods, setPeriods] = useState([])
+  const [periodStart, setPeriodStart] = useState('')
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [formInitialValues, setFormInitialValues] = useState(null)
-  const [editingId, setEditingId] = useState(null)
 
-  function refresh() {
+  const refreshBudgets = useCallback((start) => {
+    listBudgets(start ? { period_start: start } : {}).then(setBudgets)
+  }, [])
+
+  useEffect(() => {
     setLoading(true)
-    Promise.all([listBudgets(), listCategories(), listPeriods(12)])
-      .then(([b, c, p]) => {
-        setBudgets(b)
+    Promise.all([listCategories(), listPeriods(12)])
+      .then(([c, p]) => {
         setCategories(c)
         setPeriods(p)
+        const current = p[p.length - 1]?.start || ''
+        setPeriodStart(current)
+        return refreshBudgets(current)
       })
       .finally(() => setLoading(false))
+  }, [refreshBudgets])
+
+  function handlePeriodChange(start) {
+    setPeriodStart(start)
+    refreshBudgets(start)
   }
 
-  useEffect(refresh, [])
-
-  function openCreateForm() {
-    setFormInitialValues(null)
-    setEditingId(null)
-    setShowForm(true)
+  async function handleSave(id, amount) {
+    await updateBudget(id, { amount })
+    refreshBudgets(periodStart)
   }
-
-  function openEditForm(budget) {
-    setFormInitialValues(budget)
-    setEditingId(budget.id)
-    setShowForm(true)
-  }
-
-  function openDuplicateForm(budget) {
-    const currentPeriod = periods[periods.length - 1]
-    setFormInitialValues({ ...budget, period_start: currentPeriod?.start || budget.period_start })
-    setEditingId(null)
-    setShowForm(true)
-  }
-
-  function closeForm() {
-    setShowForm(false)
-    setFormInitialValues(null)
-    setEditingId(null)
-  }
-
-  async function handleSubmit(payload) {
-    if (editingId) {
-      await updateBudget(editingId, payload)
-    } else {
-      await createBudget(payload)
-    }
-    closeForm()
-    refresh()
-  }
-
-  async function handleDelete(id) {
-    if (!confirm('Remover este orçamento?')) return
-    await deleteBudget(id)
-    refresh()
-  }
-
-  const expenseCategories = categories.filter((c) => c.types.includes('expense'))
 
   if (loading) return <Loading />
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <h2 className="text-xl font-bold text-gray-900">Orçamentos</h2>
-        <button
-          onClick={() => (showForm ? closeForm() : openCreateForm())}
-          disabled={expenseCategories.length === 0}
-          className="px-4 py-2 text-sm rounded-lg bg-primary-600 text-white disabled:opacity-50"
+        <select
+          value={periodStart}
+          onChange={(e) => handlePeriodChange(e.target.value)}
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
         >
-          {showForm ? 'Fechar' : 'Novo Orçamento'}
-        </button>
+          {periods.map((p) => (
+            <option key={p.start} value={p.start}>{formatPeriodLabel(p)}</option>
+          ))}
+        </select>
       </div>
-      {expenseCategories.length === 0 && (
+      {categories.filter((c) => c.types.includes('expense')).length === 0 && (
         <p className="text-sm text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-          Cadastre uma categoria de despesa antes de criar orçamentos.
+          Cadastre uma categoria de despesa para ela aparecer aqui como orçamento.
         </p>
       )}
-      {showForm && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 max-w-md">
-          <BudgetForm
-            categories={categories}
-            periods={periods}
-            initialValues={formInitialValues}
-            onSubmit={handleSubmit}
-            onCancel={closeForm}
-          />
-        </div>
-      )}
-      <BudgetList
-        budgets={budgets}
-        categories={categories}
-        onEdit={openEditForm}
-        onDuplicate={openDuplicateForm}
-        onDelete={handleDelete}
-      />
+      <BudgetList budgets={budgets} categories={categories} onSave={handleSave} />
     </div>
   )
 }

@@ -8,6 +8,7 @@ class TransactionType(str, enum.Enum):
     expense = "expense"
     investment = "investment"
     transfer = "transfer"
+    savings = "savings"
 
 
 # Single shared column type so Transaction.type and Category.types

@@ -6,9 +6,9 @@ from datetime import date
 from app.core.database import get_db
 from app.api.deps import get_current_user
 from app.models.user import User
-from app.schemas.budget import BudgetCreate, BudgetUpdate, BudgetOut
+from app.schemas.budget import BudgetUpdate, BudgetOut
 from app.crud import budget as crud_budget
-from app.crud.period import Period, resolve_period_end
+from app.crud.period import Period, get_current_period, resolve_period_end
 
 router = APIRouter(prefix="/budgets", tags=["budgets"])
 
@@ -29,21 +29,9 @@ def list_budgets(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    budgets = crud_budget.get_budgets(db, current_user.id, period_start)
+    resolved_period_start = period_start or get_current_period(db, current_user.id).start
+    budgets = crud_budget.get_budgets(db, current_user.id, resolved_period_start)
     return [_to_out(db, current_user.id, b) for b in budgets]
-
-
-@router.post("/", response_model=BudgetOut, status_code=201)
-def create_budget(
-    budget_in: BudgetCreate,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    try:
-        budget = crud_budget.create_budget(db, current_user.id, budget_in)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    return _to_out(db, current_user.id, budget)
 
 
 @router.put("/{budget_id}", response_model=BudgetOut)
@@ -56,16 +44,5 @@ def update_budget(
     budget = crud_budget.get_budget(db, current_user.id, budget_id)
     if not budget:
         raise HTTPException(status_code=404, detail="Budget not found")
-    try:
-        budget = crud_budget.update_budget(db, budget, budget_in)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    budget = crud_budget.update_budget(db, budget, budget_in)
     return _to_out(db, current_user.id, budget)
-
-
-@router.delete("/{budget_id}", status_code=204)
-def delete_budget(budget_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    budget = crud_budget.get_budget(db, current_user.id, budget_id)
-    if not budget:
-        raise HTTPException(status_code=404, detail="Budget not found")
-    crud_budget.delete_budget(db, budget)

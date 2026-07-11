@@ -10,30 +10,41 @@ const links = [
   { to: '/metas', label: 'Metas' },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ open, onClose }) {
   return (
-    <aside className="w-56 shrink-0 bg-white border-r border-gray-200 h-screen sticky top-0 flex flex-col">
-      <div className="px-5 py-5 border-b border-gray-100">
-        <h1 className="text-lg font-bold text-primary-600">FinControl</h1>
-      </div>
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        {links.map((link) => (
-          <NavLink
-            key={link.to}
-            to={link.to}
-            end={link.end}
-            className={({ isActive }) =>
-              `block px-3 py-2 rounded-lg text-sm font-medium transition ${
-                isActive
-                  ? 'bg-primary-50 text-primary-700'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`
-            }
-          >
-            {link.label}
-          </NavLink>
-        ))}
-      </nav>
-    </aside>
+    <>
+      {open && (
+        <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={onClose} />
+      )}
+      <aside
+        className={`fixed md:sticky top-0 h-screen z-40 bg-white border-r border-gray-200 overflow-hidden transition-all duration-200 shrink-0 ${
+          open ? 'w-56 translate-x-0' : 'w-56 -translate-x-full md:w-0 md:translate-x-0 md:border-r-0'
+        }`}
+      >
+        <div className="w-56 h-full flex flex-col">
+          <div className="px-5 py-5 border-b border-gray-100">
+            <h1 className="text-lg font-bold text-primary-600">FinControl</h1>
+          </div>
+          <nav className="flex-1 px-3 py-4 space-y-1">
+            {links.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                end={link.end}
+                className={({ isActive }) =>
+                  `block px-3 py-2 rounded-lg text-sm font-medium transition ${
+                    isActive
+                      ? 'bg-primary-50 text-primary-700'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`
+                }
+              >
+                {link.label}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
+      </aside>
+    </>
   )
 }

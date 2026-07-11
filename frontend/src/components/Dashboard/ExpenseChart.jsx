@@ -15,7 +15,7 @@ export default function ExpenseChart({ data }) {
           cx="50%"
           cy="50%"
           outerRadius={90}
-          label={(entry) => entry.category_name}
+          label={(entry) => `${entry.category_name} (${Math.round((entry.percent || 0) * 100)}%)`}
         >
           {data.map((entry, index) => (
             <Cell key={index} fill={entry.color || '#6366f1'} />
