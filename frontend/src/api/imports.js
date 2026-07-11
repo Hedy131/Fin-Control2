@@ -1,12 +1,11 @@
 import api from './axios.js'
 
-export const previewImport = async (accountId, file) => {
+export const previewImport = async (file) => {
   const formData = new FormData()
-  formData.append('account_id', accountId)
   formData.append('file', file)
   const { data } = await api.post('/imports/preview', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
-    timeout: 240000,
+    timeout: 60000,
   })
   return data
 }

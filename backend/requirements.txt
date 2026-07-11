@@ -8,5 +8,4 @@ pydantic-settings==2.2.1
 python-jose[cryptography]==3.3.0
 python-multipart==0.0.9
 python-dotenv==1.0.1
-pytesseract==0.3.13
-pypdfium2==5.11.0
+openpyxl==3.1.5

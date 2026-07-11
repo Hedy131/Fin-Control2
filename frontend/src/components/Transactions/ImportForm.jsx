@@ -1,22 +1,21 @@
 import { useState } from 'react'
 import { previewImport } from '../../api/imports.js'
 
-export default function ImportForm({ accounts, onExtracted, onCancel }) {
-  const [accountId, setAccountId] = useState(accounts[0]?.id ?? '')
+export default function ImportForm({ onExtracted, onCancel }) {
   const [file, setFile] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!file || !accountId) return
+    if (!file) return
     setLoading(true)
     setError('')
     try {
-      const data = await previewImport(accountId, file)
-      onExtracted(parseInt(accountId, 10), data.rows)
+      const data = await previewImport(file)
+      onExtracted(data.rows)
     } catch (err) {
-      setError(err?.response?.data?.detail || 'Não foi possível extrair as transações deste PDF.')
+      setError(err?.response?.data?.detail || 'Não foi possível ler este ficheiro.')
     } finally {
       setLoading(false)
     }
@@ -25,36 +24,27 @@ export default function ImportForm({ accounts, onExtracted, onCancel }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Conta</label>
-        <select
-          required
-          value={accountId}
-          onChange={(e) => setAccountId(e.target.value)}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-        >
-          {accounts.map((a) => (
-            <option key={a.id} value={a.id}>{a.name} ({a.currency})</option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Extrato bancário (PDF)</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Folha de cálculo (.xlsx)</label>
         <input
           required
           type="file"
-          accept="application/pdf"
+          accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           onChange={(e) => setFile(e.target.files?.[0] || null)}
           className="w-full text-sm"
         />
+        <p className="text-xs text-gray-500 mt-1">
+          Colunas esperadas: Data | Descrição | Valor | Tipo | Conta | Categoria (opcional; para
+          transferências, adicione também uma coluna Conta Destino).
+        </p>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      {loading && <p className="text-sm text-gray-500">A analisar o PDF... para extratos com várias páginas isto pode demorar alguns minutos.</p>}
+      {loading && <p className="text-sm text-gray-500">A ler o ficheiro...</p>}
       <div className="flex justify-end gap-2 pt-2">
         <button type="button" onClick={onCancel} disabled={loading} className="px-4 py-2 text-sm rounded-lg border border-gray-300 disabled:opacity-50">
           Cancelar
         </button>
         <button type="submit" disabled={loading || !file} className="px-4 py-2 text-sm rounded-lg bg-primary-600 text-white disabled:opacity-50">
-          {loading ? 'A extrair...' : 'Extrair'}
+          {loading ? 'A ler...' : 'Ler ficheiro'}
         </button>
       </div>
     </form>

@@ -45,7 +45,6 @@ export default function Transactions() {
   const [formInitialValues, setFormInitialValues] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [importStep, setImportStep] = useState(null) // null | 'upload' | 'review'
-  const [importAccountId, setImportAccountId] = useState(null)
   const [importRows, setImportRows] = useState([])
 
   const refreshTransactions = useCallback(() => {
@@ -131,18 +130,15 @@ export default function Transactions() {
   function openImport() {
     closeForm()
     setImportRows([])
-    setImportAccountId(null)
     setImportStep('upload')
   }
 
   function closeImport() {
     setImportStep(null)
     setImportRows([])
-    setImportAccountId(null)
   }
 
-  function handleExtracted(accountId, rows) {
-    setImportAccountId(accountId)
+  function handleExtracted(rows) {
     setImportRows(rows)
     setImportStep('review')
   }
@@ -193,14 +189,14 @@ export default function Transactions() {
       )}
       {importStep === 'upload' && (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 max-w-md">
-          <ImportForm accounts={accounts} onExtracted={handleExtracted} onCancel={closeImport} />
+          <ImportForm onExtracted={handleExtracted} onCancel={closeImport} />
         </div>
       )}
       {importStep === 'review' && (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
           <ImportReview
-            accountId={importAccountId}
             rows={importRows}
+            accounts={accounts}
             categories={categories}
             onImported={handleImported}
             onCancel={closeImport}
