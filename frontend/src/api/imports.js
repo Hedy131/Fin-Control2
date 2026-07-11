@@ -6,7 +6,7 @@ export const previewImport = async (accountId, file) => {
   formData.append('file', file)
   const { data } = await api.post('/imports/preview', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
-    timeout: 90000,
+    timeout: 240000,
   })
   return data
 }

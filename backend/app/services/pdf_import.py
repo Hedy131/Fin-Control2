@@ -102,7 +102,7 @@ def extract_transactions_from_pdf(pdf_bytes: bytes, category_names: List[str]) -
         rows: List[dict] = []
         for index in range(len(pdf)):
             page = pdf[index]
-            bitmap = page.render(scale=300 / 72)
+            bitmap = page.render(scale=200 / 72)
             image = bitmap.to_pil()
             text = pytesseract.image_to_string(image, lang=OCR_LANG, config=OCR_CONFIG)
             rows.extend(_parse_page_text(text))

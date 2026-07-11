@@ -48,7 +48,7 @@ export default function ImportForm({ accounts, onExtracted, onCancel }) {
         />
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      {loading && <p className="text-sm text-gray-500">A analisar o PDF... isto pode demorar até um minuto.</p>}
+      {loading && <p className="text-sm text-gray-500">A analisar o PDF... para extratos com várias páginas isto pode demorar alguns minutos.</p>}
       <div className="flex justify-end gap-2 pt-2">
         <button type="button" onClick={onCancel} disabled={loading} className="px-4 py-2 text-sm rounded-lg border border-gray-300 disabled:opacity-50">
           Cancelar
