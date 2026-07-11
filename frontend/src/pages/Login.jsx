@@ -21,7 +21,13 @@ export default function Login() {
       await login(pin)
       navigate('/')
     } catch (err) {
-      setError(err.response?.data?.detail || 'PIN incorreto')
+      if (err.response) {
+        setError(err.response.data?.detail || 'PIN incorreto')
+      } else if (err.code === 'ECONNABORTED') {
+        setError('O servidor demorou demasiado a responder. Se acabou de aceder pela primeira vez, aguarde uns segundos (o servidor pode estar a "acordar") e tente novamente.')
+      } else {
+        setError('Não foi possível ligar ao servidor. Verifique a ligação e tente novamente.')
+      }
       setDigits(['', '', '', ''])
       inputRefs.current[0]?.focus()
     } finally {
