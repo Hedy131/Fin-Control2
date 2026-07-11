@@ -1,67 +1,122 @@
-import base64
+import os
+import re
 from typing import List
 
-import anthropic
+import pypdfium2 as pdfium
+import pytesseract
 
 from app.core.config import settings
-from app.schemas.import_pdf import ExtractedStatement, ExtractedTransactionRow
+from app.schemas.import_pdf import ExtractedTransactionRow
 
-MODEL = "claude-sonnet-5"
+if settings.TESSERACT_CMD:
+    pytesseract.pytesseract.tesseract_cmd = settings.TESSERACT_CMD
+if settings.TESSDATA_PREFIX:
+    os.environ["TESSDATA_PREFIX"] = settings.TESSDATA_PREFIX
+
+OCR_LANG = "por"
+OCR_CONFIG = "--psm 4"
+
+TXN_RE = re.compile(
+    r"^(?P<mov_date>\d{2}-\d{2}-\d{4})\s+"
+    r"(?P<operation>\S+)\s+"
+    r"(?P<trans_date>\d{2}-\d{2}-\d{4})\s+"
+    r"(?P<doc>\S+)\s+"
+    r"(?P<description>.+?)\s+"
+    r"(?P<amount>-?\d[\d.,]*\d)\s+"
+    r"(?P<balance>\d[\d.,]*\d)\s+"
+    r"(?P<currency>[A-Z]{3})\s*$"
+)
+
+# Rodapé/publicidade que aparece em todas as páginas do extrato — nunca é uma transação.
+STOP_MARKERS = (
+    "processado por computador",
+    "atlantico direct",
+    "eupago",
+    "cidade financeira",
+    "contact centre",
+    "baixe agui",
+    "baixe aqui",
+    "www,atlantico",
+    "www.atlantico",
+)
 
 
-def _build_prompt(category_names: List[str]) -> str:
-    categories_hint = (
-        ", ".join(category_names) if category_names else "(nenhuma categoria cadastrada ainda)"
-    )
-    return (
-        "Este PDF e um extrato bancario mensal. Extrai TODAS as linhas de transacao "
-        "(depositos, pagamentos, compras, levantamentos, transferencias, etc.).\n\n"
-        "Para cada transacao devolve:\n"
-        "- date: data no formato ISO yyyy-mm-dd\n"
-        "- description: a descricao tal como aparece no extrato\n"
-        "- amount: valor sempre positivo (sem sinal)\n"
-        "- type: \"income\" se o dinheiro entrou na conta (deposito/credito), "
-        "\"expense\" se saiu (pagamento/debito/compra)\n"
-        "- suggested_category: o nome mais proximo desta lista de categorias existentes, "
-        "se alguma fizer sentido (senao omite o campo): " + categories_hint + "\n\n"
-        "NAO incluas linhas de cabecalho, saldo anterior/atual, ou totais/resumos como se "
-        "fossem transacoes — só lançamentos individuais reais."
-    )
+def _parse_money(raw: str) -> float:
+    """Os separadores de milhar/decimal por vezes trocam no OCR ('.' <-> ',').
+    Os dois últimos dígitos são sempre os cêntimos; ignoramos o carácter usado."""
+    raw = raw.strip()
+    negative = raw.startswith("-")
+    raw = raw.lstrip("+-")
+    match = re.match(r"^(.*)[.,](\d{2})$", raw)
+    if match:
+        integer_part = re.sub(r"[.,]", "", match.group(1)) or "0"
+        decimals = match.group(2)
+    else:
+        integer_part = re.sub(r"[.,]", "", raw) or "0"
+        decimals = "00"
+    value = float(f"{integer_part}.{decimals}")
+    return -value if negative else value
+
+
+def _iso_date(ddmmyyyy: str) -> str:
+    day, month, year = ddmmyyyy.split("-")
+    return f"{year}-{month}-{day}"
+
+
+def _parse_page_text(text: str) -> List[dict]:
+    rows: List[dict] = []
+    current = None
+    continuations = 0
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        match = TXN_RE.match(line)
+        if match:
+            if current:
+                rows.append(current)
+            amount = _parse_money(match.group("amount"))
+            current = {
+                "date": _iso_date(match.group("trans_date")),
+                "description": match.group("description").strip(),
+                "amount": round(abs(amount), 2),
+                "type": "income" if amount > 0 else "expense",
+            }
+            continuations = 0
+            continue
+        low = line.lower()
+        if any(marker in low for marker in STOP_MARKERS):
+            continue
+        # Cada transação tem no máximo uma linha de descrição adicional neste formato.
+        if current is not None and continuations < 1:
+            current["description"] = f"{current['description']} {line}".strip()
+            continuations += 1
+    if current:
+        rows.append(current)
+    return rows
 
 
 def extract_transactions_from_pdf(pdf_bytes: bytes, category_names: List[str]) -> List[ExtractedTransactionRow]:
-    if not settings.ANTHROPIC_API_KEY:
-        raise ValueError("ANTHROPIC_API_KEY nao esta configurada no servidor")
-
-    client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
-    encoded = base64.standard_b64encode(pdf_bytes).decode("utf-8")
-
+    pdf = pdfium.PdfDocument(pdf_bytes)
     try:
-        response = client.messages.parse(
-            model=MODEL,
-            max_tokens=8192,
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "document",
-                            "source": {
-                                "type": "base64",
-                                "media_type": "application/pdf",
-                                "data": encoded,
-                            },
-                        },
-                        {"type": "text", "text": _build_prompt(category_names)},
-                    ],
-                }
-            ],
-            output_format=ExtractedStatement,
+        rows: List[dict] = []
+        for index in range(len(pdf)):
+            page = pdf[index]
+            bitmap = page.render(scale=300 / 72)
+            image = bitmap.to_pil()
+            text = pytesseract.image_to_string(image, lang=OCR_LANG, config=OCR_CONFIG)
+            rows.extend(_parse_page_text(text))
+    except pytesseract.TesseractNotFoundError as e:
+        raise ValueError(
+            "O motor de OCR (Tesseract) não está instalado no servidor."
+        ) from e
+    finally:
+        pdf.close()
+
+    if not rows:
+        raise ValueError(
+            "Não foi possível reconhecer nenhuma transação neste PDF. "
+            "Verifique se é um extrato bancário legível."
         )
-    except anthropic.APIError as e:
-        raise ValueError(f"Falha ao comunicar com a Claude API: {e}")
 
-    if response.stop_reason == "refusal" or response.parsed_output is None:
-        raise ValueError("A IA nao conseguiu processar este PDF (recusado ou sem resultado).")
-
-    return response.parsed_output.transactions
+    return [ExtractedTransactionRow(**row) for row in rows]

@@ -15,7 +15,9 @@ class Settings(BaseSettings):
 
     APP_PIN: str = "1234"
 
-    ANTHROPIC_API_KEY: str = ""
+    # Só necessário se o Tesseract não estiver no PATH (tipicamente no Windows local)
+    TESSERACT_CMD: str = ""
+    TESSDATA_PREFIX: str = ""
 
     BACKEND_CORS_ORIGINS: str = '["http://localhost:5173","http://localhost:3000"]'
 
