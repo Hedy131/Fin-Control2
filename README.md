@@ -64,20 +64,20 @@ docker-compose exec backend alembic revision --autogenerate -m "initial"
 docker-compose exec backend alembic upgrade head
 ```
 
-## Deploy no Render.com
+## Deploy no Render.com (backend + frontend) com Neon (Postgres)
 
-O repositório inclui um `render.yaml` (Blueprint) na raiz que provisiona os 3 componentes de uma vez: banco Postgres, backend (Web Service Docker) e frontend (Static Site).
+O repositório inclui um `render.yaml` (Blueprint) na raiz que provisiona o backend (Web Service Docker) e o frontend (Static Site) no Render. O banco Postgres fica no [Neon](https://neon.tech) em vez do Postgres gerido do Render (Neon free não expira depois de X dias, ao contrário do Postgres free do Render).
 
-1. Faça login em [render.com](https://render.com) e vá em **New > Blueprint**.
-2. Conecte o repositório `Hedy131/Fin-Control2` — o Render lê o `render.yaml` automaticamente e mostra os 3 recursos a criar (`fincontrol-db`, `fincontrol-backend`, `fincontrol-frontend`).
-3. Antes de confirmar, defina o valor de `APP_PIN` (o Blueprint deixa esse campo em branco de propósito, para não ficar um PIN fixo no código-fonte). `SECRET_KEY` é gerado automaticamente pelo Render.
-4. Clique em **Apply** e aguarde os 3 serviços ficarem `Live` (o build do backend, incluindo a imagem Docker, demora alguns minutos).
-5. Se o Render atribuir URLs diferentes de `fincontrol-backend.onrender.com`/`fincontrol-frontend.onrender.com` (porque o nome já estava em uso), atualize manualmente as variáveis de ambiente cruzadas nos dois serviços:
+1. Em [neon.tech](https://neon.tech), crie um projeto (free tier) e copie a **connection string** (formato `postgresql://user:password@ep-xxxx.neon.tech/dbname?sslmode=require` — confirme que tem `?sslmode=require` no fim, o Neon exige SSL).
+2. Em [render.com](https://render.com), **New > Blueprint** e conecte o repositório `Hedy131/Fin-Control2` — o Render lê o `render.yaml` e mostra os 2 serviços a criar (`fincontrol-backend`, `fincontrol-frontend`).
+3. Antes de confirmar, defina `DATABASE_URL` (cole a connection string do Neon do passo 1) e `APP_PIN` — o Blueprint deixa os dois em branco de propósito, para não ficarem fixos no código-fonte. `SECRET_KEY` é gerado automaticamente pelo Render.
+4. Clique em **Apply** e aguarde os 2 serviços ficarem `Live` (o build do backend, incluindo a imagem Docker, demora alguns minutos).
+5. Se o Render atribuir URLs diferentes de `fincontrol-backend.onrender.com`/`fincontrol-frontend.onrender.com` (porque o nome já estava em uso), atualize manualmente as variáveis de ambiente cruzadas nos dois serviços e edite o `render.yaml` do repo para refletir isso:
    - Em `fincontrol-backend` → `BACKEND_CORS_ORIGINS` deve conter a URL real do frontend.
    - Em `fincontrol-frontend` → `VITE_API_URL` deve apontar para `https://<url-real-do-backend>/api`, e depois disparar um novo deploy do frontend (variáveis do Vite só são aplicadas no build).
 6. Abra a URL do frontend e entre com o PIN definido no passo 3.
 
-Notas do plano gratuito do Render: o banco Postgres free expira depois de 90 dias (dá para recriar/migrar quando chegar perto disso) e o Web Service free "dorme" após 15 minutos sem tráfego — o primeiro acesso depois disso demora ~30-50s para acordar.
+Notas do plano gratuito: o Web Service free do Render "dorme" após 15 minutos sem tráfego — o primeiro acesso depois disso demora ~30-50s para acordar (o axios já tem timeout de 20s e mostra erro em vez de ficar preso). O projeto free do Neon também suspende o compute após inatividade, mas acorda automaticamente na primeira query, sem expirar de vez como acontecia com o Postgres free do Render.
 
 ## Como rodar sem Docker (desenvolvimento local)
 
