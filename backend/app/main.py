@@ -14,6 +14,7 @@ from app.api.routes import (
     periods,
     investments,
     goals,
+    imports,
 )
 from app import models  # noqa: F401  ensures models are registered before create_all
 
@@ -43,6 +44,7 @@ app.include_router(dashboard.router, prefix=settings.API_V1_STR)
 app.include_router(periods.router, prefix=settings.API_V1_STR)
 app.include_router(investments.router, prefix=settings.API_V1_STR)
 app.include_router(goals.router, prefix=settings.API_V1_STR)
+app.include_router(imports.router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")

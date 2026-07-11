@@ -15,6 +15,8 @@ class Settings(BaseSettings):
 
     APP_PIN: str = "1234"
 
+    ANTHROPIC_API_KEY: str = ""
+
     BACKEND_CORS_ORIGINS: str = '["http://localhost:5173","http://localhost:3000"]'
 
     @property
