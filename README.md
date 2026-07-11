@@ -64,6 +64,21 @@ docker-compose exec backend alembic revision --autogenerate -m "initial"
 docker-compose exec backend alembic upgrade head
 ```
 
+## Deploy no Render.com
+
+O repositório inclui um `render.yaml` (Blueprint) na raiz que provisiona os 3 componentes de uma vez: banco Postgres, backend (Web Service Docker) e frontend (Static Site).
+
+1. Faça login em [render.com](https://render.com) e vá em **New > Blueprint**.
+2. Conecte o repositório `Hedy131/Fin-Control2` — o Render lê o `render.yaml` automaticamente e mostra os 3 recursos a criar (`fincontrol-db`, `fincontrol-backend`, `fincontrol-frontend`).
+3. Antes de confirmar, defina o valor de `APP_PIN` (o Blueprint deixa esse campo em branco de propósito, para não ficar um PIN fixo no código-fonte). `SECRET_KEY` é gerado automaticamente pelo Render.
+4. Clique em **Apply** e aguarde os 3 serviços ficarem `Live` (o build do backend, incluindo a imagem Docker, demora alguns minutos).
+5. Se o Render atribuir URLs diferentes de `fincontrol-backend.onrender.com`/`fincontrol-frontend.onrender.com` (porque o nome já estava em uso), atualize manualmente as variáveis de ambiente cruzadas nos dois serviços:
+   - Em `fincontrol-backend` → `BACKEND_CORS_ORIGINS` deve conter a URL real do frontend.
+   - Em `fincontrol-frontend` → `VITE_API_URL` deve apontar para `https://<url-real-do-backend>/api`, e depois disparar um novo deploy do frontend (variáveis do Vite só são aplicadas no build).
+6. Abra a URL do frontend e entre com o PIN definido no passo 3.
+
+Notas do plano gratuito do Render: o banco Postgres free expira depois de 90 dias (dá para recriar/migrar quando chegar perto disso) e o Web Service free "dorme" após 15 minutos sem tráfego — o primeiro acesso depois disso demora ~30-50s para acordar.
+
 ## Como rodar sem Docker (desenvolvimento local)
 
 ### 1. PostgreSQL
