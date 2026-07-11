@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import CurrencyInput from '../Common/CurrencyInput.jsx'
 import { formatCurrency, CURRENCIES } from '../../utils/currency.js'
 
 function PositionCard({ position, category, onSave }) {
+  const navigate = useNavigate()
   const [currentValue, setCurrentValue] = useState(position.current_value)
   const gainColor = position.gain_loss >= 0 ? 'text-green-600' : 'text-red-600'
 
@@ -17,7 +19,10 @@ function PositionCard({ position, category, onSave }) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+    <div
+      onClick={() => navigate(`/transactions?category_id=${position.category_id}`)}
+      className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 cursor-pointer transition-colors hover:bg-gray-50 hover:border-primary-200"
+    >
       <div className="flex items-center gap-2 mb-3">
         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: category?.color || '#6366f1' }} />
         <p className="font-semibold text-gray-900">{category?.name || '-'}</p>
@@ -31,7 +36,7 @@ function PositionCard({ position, category, onSave }) {
         {position.gain_loss_pct !== null && position.gain_loss_pct !== undefined &&
           ` (${position.gain_loss_pct >= 0 ? '+' : ''}${position.gain_loss_pct}%)`}
       </p>
-      <div className="grid grid-cols-2 gap-2 mt-3">
+      <div className="grid grid-cols-2 gap-2 mt-3" onClick={(e) => e.stopPropagation()}>
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">Valor Atual</label>
           <CurrencyInput value={currentValue} onChange={setCurrentValue} onBlur={handleValueBlur} />

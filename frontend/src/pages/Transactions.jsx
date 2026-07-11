@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   listTransactions,
   getTransactionsSummary,
@@ -27,13 +28,17 @@ const EMPTY_FILTERS = {
 }
 
 export default function Transactions() {
+  const [searchParams] = useSearchParams()
   const [transactions, setTransactions] = useState([])
   const [summary, setSummary] = useState([])
   const [accounts, setAccounts] = useState([])
   const [categories, setCategories] = useState([])
   const [periods, setPeriods] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filters, setFilters] = useState(EMPTY_FILTERS)
+  const [filters, setFilters] = useState(() => {
+    const categoryId = searchParams.get('category_id')
+    return categoryId ? { ...EMPTY_FILTERS, category_id: categoryId } : EMPTY_FILTERS
+  })
   const [showForm, setShowForm] = useState(false)
   const [formInitialValues, setFormInitialValues] = useState(null)
   const [editingId, setEditingId] = useState(null)
