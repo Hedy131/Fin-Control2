@@ -12,6 +12,8 @@ from app.schemas.transaction import (
     TransactionUpdate,
     TransactionOut,
     TransactionsSummary,
+    TransactionBulkDeleteRequest,
+    TransactionBulkDeleteResponse,
 )
 from app.crud import transaction as crud_transaction
 
@@ -51,6 +53,16 @@ def get_transactions_summary(
         db, current_user.id, account_id, category_id, type, search, start_date, end_date
     )
     return {"by_currency": by_currency}
+
+
+@router.post("/bulk-delete", response_model=TransactionBulkDeleteResponse)
+def bulk_delete_transactions(
+    payload: TransactionBulkDeleteRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    deleted = crud_transaction.delete_transactions(db, current_user.id, payload.ids)
+    return {"deleted": deleted}
 
 
 @router.post("/", response_model=TransactionOut, status_code=201)

@@ -4,6 +4,7 @@ import { listCategories } from '../api/categories.js'
 import InvestmentList from '../components/Investments/InvestmentList.jsx'
 import AllocationChart from '../components/Investments/AllocationChart.jsx'
 import TotalsBar from '../components/Investments/TotalsBar.jsx'
+import CurrencyConverter from '../components/Investments/CurrencyConverter.jsx'
 import Loading from '../components/Common/Loading.jsx'
 
 export default function Investimentos() {
@@ -42,6 +43,7 @@ export default function Investimentos() {
         As posições vêm das categorias de investimento e das transações lançadas nelas — para investir, lance uma transação em Transações.
       </p>
       <TotalsBar positions={positions} />
+      <CurrencyConverter />
       {positions.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
           <h3 className="text-sm font-semibold text-gray-700 mb-4">Alocação por Categoria</h3>

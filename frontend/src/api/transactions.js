@@ -5,3 +5,4 @@ export const getTransactionsSummary = async (params = {}) => (await api.get('/tr
 export const createTransaction = async (payload) => (await api.post('/transactions/', payload)).data
 export const updateTransaction = async (id, payload) => (await api.put(`/transactions/${id}`, payload)).data
 export const deleteTransaction = async (id) => (await api.delete(`/transactions/${id}`)).data
+export const bulkDeleteTransactions = async (ids) => (await api.post('/transactions/bulk-delete', { ids })).data

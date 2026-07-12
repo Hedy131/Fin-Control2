@@ -63,3 +63,11 @@ class CurrencyTotals(BaseModel):
 
 class TransactionsSummary(BaseModel):
     by_currency: List[CurrencyTotals]
+
+
+class TransactionBulkDeleteRequest(BaseModel):
+    ids: List[int]
+
+
+class TransactionBulkDeleteResponse(BaseModel):
+    deleted: int

@@ -1,7 +1,17 @@
 import { formatCurrency } from '../../utils/currency.js'
 import { TYPE_COLOR } from '../../utils/categoryTypes.js'
 
-export default function TransactionList({ transactions, accounts, categories, onEdit, onDuplicate, onDelete }) {
+export default function TransactionList({
+  transactions,
+  accounts,
+  categories,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
+  onEdit,
+  onDuplicate,
+  onDelete,
+}) {
   if (transactions.length === 0) {
     return <p className="text-sm text-gray-400">Nenhuma transação encontrada.</p>
   }
@@ -9,12 +19,16 @@ export default function TransactionList({ transactions, accounts, categories, on
   const account = (id) => accounts.find((a) => a.id === id)
   const accountName = (id) => account(id)?.name || '-'
   const categoryName = (id) => categories.find((c) => c.id === id)?.name || '-'
+  const allSelected = transactions.length > 0 && transactions.every((t) => selectedIds.has(t.id))
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
           <tr>
+            <th className="text-left px-4 py-3 w-8">
+              <input type="checkbox" checked={allSelected} onChange={(e) => onToggleSelectAll(e.target.checked)} />
+            </th>
             <th className="text-left px-4 py-3">Data</th>
             <th className="text-left px-4 py-3">Descrição</th>
             <th className="text-left px-4 py-3">Conta</th>
@@ -27,7 +41,10 @@ export default function TransactionList({ transactions, accounts, categories, on
           {transactions.map((t) => {
             const src = account(t.account_id)
             return (
-              <tr key={t.id}>
+              <tr key={t.id} className={selectedIds.has(t.id) ? 'bg-primary-50/40' : ''}>
+                <td className="px-4 py-3">
+                  <input type="checkbox" checked={selectedIds.has(t.id)} onChange={() => onToggleSelect(t.id)} />
+                </td>
                 <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
                   {t.date}
                   {t.time && <span className="text-gray-400"> {t.time.slice(0, 5)}</span>}

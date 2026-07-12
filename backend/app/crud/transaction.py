@@ -162,3 +162,13 @@ def update_transaction(db: Session, transaction: Transaction, transaction_in: Tr
 def delete_transaction(db: Session, transaction: Transaction):
     db.delete(transaction)
     db.commit()
+
+
+def delete_transactions(db: Session, user_id: int, ids: list[int]) -> int:
+    if not ids:
+        return 0
+    query = db.query(Transaction).filter(Transaction.user_id == user_id, Transaction.id.in_(ids))
+    count = query.count()
+    query.delete(synchronize_session=False)
+    db.commit()
+    return count

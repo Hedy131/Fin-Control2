@@ -6,6 +6,7 @@ import {
   createTransaction,
   updateTransaction,
   deleteTransaction,
+  bulkDeleteTransactions,
 } from '../api/transactions.js'
 import { listAccounts } from '../api/accounts.js'
 import { listCategories } from '../api/categories.js'
@@ -22,8 +23,6 @@ const EMPTY_FILTERS = {
   account_id: '',
   category_id: '',
   type: '',
-  currency: '',
-  search: '',
   period_start: '',
   start_date: '',
   end_date: '',
@@ -46,20 +45,21 @@ export default function Transactions() {
   const [editingId, setEditingId] = useState(null)
   const [importStep, setImportStep] = useState(null) // null | 'upload' | 'review'
   const [importRows, setImportRows] = useState([])
+  const [selectedIds, setSelectedIds] = useState(() => new Set())
 
   const refreshTransactions = useCallback(() => {
-    const { account_id, category_id, type, search, start_date, end_date } = filters
+    const { account_id, category_id, type, start_date, end_date } = filters
     const params = {}
     if (account_id) params.account_id = account_id
     if (category_id) params.category_id = category_id
     if (type) params.type = type
-    if (search) params.search = search
     if (start_date) params.start_date = start_date
     if (end_date) params.end_date = end_date
 
     Promise.all([listTransactions(params), getTransactionsSummary(params)]).then(([t, s]) => {
       setTransactions(t)
       setSummary(s.by_currency)
+      setSelectedIds(new Set())
     })
   }, [filters])
 
@@ -78,11 +78,30 @@ export default function Transactions() {
     refreshTransactions()
   }, [refreshTransactions])
 
-  const filteredTransactions = filters.currency
-    ? transactions.filter((t) => accounts.find((a) => a.id === t.account_id)?.currency === filters.currency)
-    : transactions
+  function toggleSelect(id) {
+    setSelectedIds((current) => {
+      const next = new Set(current)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
-  const filteredSummary = filters.currency ? summary.filter((row) => row.currency === filters.currency) : summary
+  function toggleSelectAll(checked) {
+    setSelectedIds((current) => {
+      const next = new Set(current)
+      if (checked) transactions.forEach((t) => next.add(t.id))
+      else transactions.forEach((t) => next.delete(t.id))
+      return next
+    })
+  }
+
+  async function handleBulkDelete() {
+    if (selectedIds.size === 0) return
+    if (!confirm(`Remover ${selectedIds.size} transações selecionadas?`)) return
+    await bulkDeleteTransactions(Array.from(selectedIds))
+    refreshTransactions()
+  }
 
   function openCreateForm() {
     closeImport()
@@ -155,6 +174,14 @@ export default function Transactions() {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-900">Transações</h2>
         <div className="flex gap-2">
+          {selectedIds.size > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              className="px-4 py-2 text-sm rounded-lg border border-red-300 text-red-600 hover:bg-red-50"
+            >
+              Remover selecionadas ({selectedIds.size})
+            </button>
+          )}
           <button
             onClick={() => (importStep ? closeImport() : openImport())}
             disabled={accounts.length === 0}
@@ -204,11 +231,14 @@ export default function Transactions() {
         </div>
       )}
       <TransactionFilters accounts={accounts} categories={categories} periods={periods} filters={filters} onChange={setFilters} />
-      <FilterSummary byCurrency={filteredSummary} />
+      <FilterSummary byCurrency={summary} />
       <TransactionList
-        transactions={filteredTransactions}
+        transactions={transactions}
         accounts={accounts}
         categories={categories}
+        selectedIds={selectedIds}
+        onToggleSelect={toggleSelect}
+        onToggleSelectAll={toggleSelectAll}
         onEdit={openEditForm}
         onDuplicate={openDuplicateForm}
         onDelete={handleDelete}
