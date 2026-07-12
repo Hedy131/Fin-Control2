@@ -9,3 +9,7 @@ export async function getMe() {
   const { data } = await api.get('/users/me')
   return data
 }
+
+export async function changePin(currentPin, newPin) {
+  await api.put('/auth/pin', { current_pin: currentPin, new_pin: newPin })
+}

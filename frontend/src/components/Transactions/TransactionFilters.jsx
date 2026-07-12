@@ -25,7 +25,6 @@ export default function TransactionFilters({ accounts, categories, periods, filt
       <div>
         <label className="block text-xs font-medium text-gray-500 mb-1">Período</label>
         <select value={filters.period_start} onChange={handlePeriodSelect} className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm">
-          <option value="">Todos</option>
           {periods.map((p) => (
             <option key={p.start} value={p.start}>{formatPeriodLabel(p)}</option>
           ))}

@@ -1,5 +1,3 @@
-from datetime import date
-
 from sqlalchemy.orm import Session
 
 from app.models.budget import Budget
@@ -9,44 +7,24 @@ from app.schemas.budget import BudgetUpdate
 from app.crud.period import Period, sum_transactions
 
 
-def get_budgets(db: Session, user_id: int, period_start: date):
-    """One budget per expense-type category for period_start, auto-creating any
-    that don't exist yet (copying the most recent prior amount for that
-    category, else 0)."""
+def get_budgets(db: Session, user_id: int):
+    """One budget per expense-type category, auto-creating any that don't
+    exist yet with amount 0. The limit is a single value shared across all
+    periods (not re-entered per period)."""
     expense_categories = (
         db.query(Category)
         .filter(Category.user_id == user_id, Category.types.any(TransactionType.expense))
         .order_by(Category.name)
         .all()
     )
-    existing = {
-        b.category_id: b
-        for b in db.query(Budget)
-        .filter(Budget.user_id == user_id, Budget.period_start == period_start)
-        .all()
-    }
+    existing = {b.category_id: b for b in db.query(Budget).filter(Budget.user_id == user_id).all()}
 
     result = []
     created = False
     for category in expense_categories:
         budget = existing.get(category.id)
         if budget is None:
-            previous = (
-                db.query(Budget)
-                .filter(
-                    Budget.user_id == user_id,
-                    Budget.category_id == category.id,
-                    Budget.period_start < period_start,
-                )
-                .order_by(Budget.period_start.desc())
-                .first()
-            )
-            budget = Budget(
-                user_id=user_id,
-                category_id=category.id,
-                amount=previous.amount if previous else 0.0,
-                period_start=period_start,
-            )
+            budget = Budget(user_id=user_id, category_id=category.id, amount=0.0)
             db.add(budget)
             created = True
         result.append(budget)

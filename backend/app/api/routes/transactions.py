@@ -14,8 +14,12 @@ from app.schemas.transaction import (
     TransactionsSummary,
     TransactionBulkDeleteRequest,
     TransactionBulkDeleteResponse,
+    TransactionBulkUpdateRequest,
+    TransactionBulkUpdateResponse,
 )
 from app.crud import transaction as crud_transaction
+from app.crud import account as crud_account
+from app.crud import category as crud_category
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
@@ -63,6 +67,29 @@ def bulk_delete_transactions(
 ):
     deleted = crud_transaction.delete_transactions(db, current_user.id, payload.ids)
     return {"deleted": deleted}
+
+
+@router.post("/bulk-update", response_model=TransactionBulkUpdateResponse)
+def bulk_update_transactions(
+    payload: TransactionBulkUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if payload.account_id is not None and not crud_account.get_account(db, current_user.id, payload.account_id):
+        raise HTTPException(status_code=404, detail="Account not found")
+    if payload.category_id is not None and not crud_category.get_category(db, current_user.id, payload.category_id):
+        raise HTTPException(status_code=404, detail="Category not found")
+
+    updates = {}
+    if payload.account_id is not None:
+        updates["account_id"] = payload.account_id
+    if payload.category_id is not None:
+        updates["category_id"] = payload.category_id
+    if payload.type is not None:
+        updates["type"] = payload.type
+
+    updated = crud_transaction.bulk_update_transactions(db, current_user.id, payload.ids, updates)
+    return {"updated": updated}
 
 
 @router.post("/", response_model=TransactionOut, status_code=201)

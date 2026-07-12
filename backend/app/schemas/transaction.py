@@ -71,3 +71,14 @@ class TransactionBulkDeleteRequest(BaseModel):
 
 class TransactionBulkDeleteResponse(BaseModel):
     deleted: int
+
+
+class TransactionBulkUpdateRequest(BaseModel):
+    ids: List[int]
+    account_id: Optional[int] = None
+    category_id: Optional[int] = None
+    type: Optional[TransactionType] = None
+
+
+class TransactionBulkUpdateResponse(BaseModel):
+    updated: int

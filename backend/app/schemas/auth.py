@@ -8,3 +8,8 @@ class Token(BaseModel):
 
 class PinLogin(BaseModel):
     pin: str = Field(..., pattern=r"^\d{4}$")
+
+
+class PinChange(BaseModel):
+    current_pin: str = Field(..., pattern=r"^\d{4}$")
+    new_pin: str = Field(..., pattern=r"^\d{4}$")

@@ -2,10 +2,8 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { formatCurrency } from '../../utils/currency.js'
 
 const SLICES = [
-  { key: 'income', name: 'Receitas', color: '#16a34a' },
   { key: 'expense', name: 'Despesas', color: '#dc2626' },
   { key: 'investment', name: 'Investimentos', color: '#2563eb' },
-  { key: 'savings', name: 'Poupanças', color: '#059669' },
 ]
 
 function CompositionChart({ row }) {
@@ -37,7 +35,7 @@ function CompositionChart({ row }) {
   )
 }
 
-export default function FilterSummary({ byCurrency }) {
+export default function BudgetSummary({ byCurrency }) {
   if (!byCurrency || byCurrency.length === 0) return null
 
   return (
@@ -48,26 +46,12 @@ export default function FilterSummary({ byCurrency }) {
             <p className="text-xs font-medium text-gray-400 mb-2">{row.currency}</p>
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-500">Receitas</span>
-                <span className="text-green-600 font-medium">{formatCurrency(row.income, row.currency)}</span>
-              </div>
-              <div className="flex justify-between">
                 <span className="text-gray-500">Despesas</span>
                 <span className="text-red-600 font-medium">{formatCurrency(row.expense, row.currency)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Investimentos</span>
                 <span className="text-blue-600 font-medium">{formatCurrency(row.investment, row.currency)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Poupanças</span>
-                <span className="text-emerald-600 font-medium">{formatCurrency(row.savings, row.currency)}</span>
-              </div>
-              <div className="flex justify-between pt-1 border-t border-gray-100">
-                <span className="text-gray-700 font-medium">Saldo</span>
-                <span className={`font-bold ${row.balance >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                  {formatCurrency(row.balance, row.currency)}
-                </span>
               </div>
             </div>
           </div>

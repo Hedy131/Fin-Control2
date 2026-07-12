@@ -1,16 +1,31 @@
-import { NavLink } from 'react-router-dom'
+import { useState } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 
 const links = [
   { to: '/', label: 'Painel', end: true },
   { to: '/transactions', label: 'Transações' },
-  { to: '/accounts', label: 'Contas' },
-  { to: '/categories', label: 'Categorias' },
   { to: '/budgets', label: 'Orçamentos' },
   { to: '/investimentos', label: 'Investimentos' },
   { to: '/metas', label: 'Metas' },
 ]
 
+const settingsLinks = [
+  { to: '/configuracoes/senha', label: 'Senha' },
+  { to: '/accounts', label: 'Contas' },
+  { to: '/categories', label: 'Categorias' },
+]
+
+const linkClass = ({ isActive }) =>
+  `block px-3 py-2 rounded-lg text-sm font-medium transition ${
+    isActive ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-100'
+  }`
+
 export default function Sidebar({ open, onClose }) {
+  const location = useLocation()
+  const [settingsOpen, setSettingsOpen] = useState(
+    settingsLinks.some((link) => location.pathname.startsWith(link.to))
+  )
+
   return (
     <>
       {open && (
@@ -27,21 +42,27 @@ export default function Sidebar({ open, onClose }) {
           </div>
           <nav className="flex-1 px-3 py-4 space-y-1">
             {links.map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                end={link.end}
-                className={({ isActive }) =>
-                  `block px-3 py-2 rounded-lg text-sm font-medium transition ${
-                    isActive
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`
-                }
-              >
+              <NavLink key={link.to} to={link.to} end={link.end} className={linkClass}>
                 {link.label}
               </NavLink>
             ))}
+            <button
+              type="button"
+              onClick={() => setSettingsOpen((v) => !v)}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition"
+            >
+              <span>Configurações</span>
+              <span className={`transition-transform ${settingsOpen ? 'rotate-90' : ''}`}>›</span>
+            </button>
+            {settingsOpen && (
+              <div className="pl-3 space-y-1 border-l border-gray-100 ml-3">
+                {settingsLinks.map((link) => (
+                  <NavLink key={link.to} to={link.to} className={linkClass}>
+                    {link.label}
+                  </NavLink>
+                ))}
+              </div>
+            )}
           </nav>
         </div>
       </aside>

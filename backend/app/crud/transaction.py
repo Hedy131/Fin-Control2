@@ -172,3 +172,21 @@ def delete_transactions(db: Session, user_id: int, ids: list[int]) -> int:
     query.delete(synchronize_session=False)
     db.commit()
     return count
+
+
+def bulk_update_transactions(db: Session, user_id: int, ids: list[int], updates: dict) -> int:
+    if not ids or not updates:
+        return 0
+    transactions = (
+        db.query(Transaction).filter(Transaction.user_id == user_id, Transaction.id.in_(ids)).all()
+    )
+    for transaction in transactions:
+        for field, value in updates.items():
+            setattr(transaction, field, value)
+        effective_type = updates.get("type", transaction.type)
+        if transaction.category_id is not None:
+            category = db.query(Category).filter(Category.id == transaction.category_id).first()
+            if category is not None and effective_type not in (category.types or []):
+                transaction.category_id = None
+    db.commit()
+    return len(transactions)

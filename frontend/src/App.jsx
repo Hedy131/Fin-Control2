@@ -7,6 +7,7 @@ import Transactions from './pages/Transactions.jsx'
 import Budgets from './pages/Budgets.jsx'
 import Investimentos from './pages/Investimentos.jsx'
 import Metas from './pages/Metas.jsx'
+import Senha from './pages/Senha.jsx'
 import PrivateRoute from './components/Common/PrivateRoute.jsx'
 import Layout from './components/Layout/Layout.jsx'
 
@@ -28,6 +29,7 @@ export default function App() {
         <Route path="/budgets" element={<Budgets />} />
         <Route path="/investimentos" element={<Investimentos />} />
         <Route path="/metas" element={<Metas />} />
+        <Route path="/configuracoes/senha" element={<Senha />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

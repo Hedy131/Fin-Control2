@@ -2,11 +2,11 @@ import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   listTransactions,
-  getTransactionsSummary,
   createTransaction,
   updateTransaction,
   deleteTransaction,
   bulkDeleteTransactions,
+  bulkUpdateTransactions,
 } from '../api/transactions.js'
 import { listAccounts } from '../api/accounts.js'
 import { listCategories } from '../api/categories.js'
@@ -14,7 +14,7 @@ import { listPeriods } from '../api/periods.js'
 import TransactionForm from '../components/Transactions/TransactionForm.jsx'
 import TransactionList from '../components/Transactions/TransactionList.jsx'
 import TransactionFilters from '../components/Transactions/TransactionFilters.jsx'
-import FilterSummary from '../components/Transactions/FilterSummary.jsx'
+import BulkEditBar from '../components/Transactions/BulkEditBar.jsx'
 import ImportForm from '../components/Transactions/ImportForm.jsx'
 import ImportReview from '../components/Transactions/ImportReview.jsx'
 import Loading from '../components/Common/Loading.jsx'
@@ -31,7 +31,6 @@ const EMPTY_FILTERS = {
 export default function Transactions() {
   const [searchParams] = useSearchParams()
   const [transactions, setTransactions] = useState([])
-  const [summary, setSummary] = useState([])
   const [accounts, setAccounts] = useState([])
   const [categories, setCategories] = useState([])
   const [periods, setPeriods] = useState([])
@@ -56,9 +55,8 @@ export default function Transactions() {
     if (start_date) params.start_date = start_date
     if (end_date) params.end_date = end_date
 
-    Promise.all([listTransactions(params), getTransactionsSummary(params)]).then(([t, s]) => {
+    listTransactions(params).then((t) => {
       setTransactions(t)
-      setSummary(s.by_currency)
       setSelectedIds(new Set())
     })
   }, [filters])
@@ -70,6 +68,12 @@ export default function Transactions() {
         setAccounts(a)
         setCategories(c)
         setPeriods(p)
+        const current = p[p.length - 1]
+        if (current) {
+          setFilters((f) =>
+            f.period_start ? f : { ...f, period_start: current.start, start_date: current.start, end_date: current.end || '' }
+          )
+        }
       })
       .finally(() => setLoading(false))
   }, [])
@@ -100,6 +104,11 @@ export default function Transactions() {
     if (selectedIds.size === 0) return
     if (!confirm(`Remover ${selectedIds.size} transações selecionadas?`)) return
     await bulkDeleteTransactions(Array.from(selectedIds))
+    refreshTransactions()
+  }
+
+  async function handleBulkUpdate(payload) {
+    await bulkUpdateTransactions({ ids: Array.from(selectedIds), ...payload })
     refreshTransactions()
   }
 
@@ -174,14 +183,6 @@ export default function Transactions() {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-900">Transações</h2>
         <div className="flex gap-2">
-          {selectedIds.size > 0 && (
-            <button
-              onClick={handleBulkDelete}
-              className="px-4 py-2 text-sm rounded-lg border border-red-300 text-red-600 hover:bg-red-50"
-            >
-              Remover selecionadas ({selectedIds.size})
-            </button>
-          )}
           <button
             onClick={() => (importStep ? closeImport() : openImport())}
             disabled={accounts.length === 0}
@@ -231,7 +232,13 @@ export default function Transactions() {
         </div>
       )}
       <TransactionFilters accounts={accounts} categories={categories} periods={periods} filters={filters} onChange={setFilters} />
-      <FilterSummary byCurrency={summary} />
+      <BulkEditBar
+        selectedCount={selectedIds.size}
+        accounts={accounts}
+        categories={categories}
+        onApply={handleBulkUpdate}
+        onDelete={handleBulkDelete}
+      />
       <TransactionList
         transactions={transactions}
         accounts={accounts}

@@ -1,20 +1,29 @@
 import { useEffect, useState, useCallback } from 'react'
 import { listBudgets, updateBudget } from '../api/budgets.js'
+import { getTransactionsSummary } from '../api/transactions.js'
 import { listCategories } from '../api/categories.js'
 import { listPeriods } from '../api/periods.js'
 import BudgetList from '../components/Budgets/BudgetList.jsx'
+import BudgetSummary from '../components/Budgets/BudgetSummary.jsx'
 import Loading from '../components/Common/Loading.jsx'
 import { formatPeriodLabel } from '../utils/period.js'
 
 export default function Budgets() {
   const [budgets, setBudgets] = useState([])
+  const [summary, setSummary] = useState([])
   const [categories, setCategories] = useState([])
   const [periods, setPeriods] = useState([])
   const [periodStart, setPeriodStart] = useState('')
   const [loading, setLoading] = useState(true)
 
-  const refreshBudgets = useCallback((start) => {
+  const refreshBudgets = useCallback((period) => {
+    const start = period?.start || ''
     listBudgets(start ? { period_start: start } : {}).then(setBudgets)
+    if (start) {
+      const params = { start_date: start }
+      if (period.end) params.end_date = period.end
+      getTransactionsSummary(params).then((s) => setSummary(s.by_currency))
+    }
   }, [])
 
   useEffect(() => {
@@ -23,8 +32,8 @@ export default function Budgets() {
       .then(([c, p]) => {
         setCategories(c)
         setPeriods(p)
-        const current = p[p.length - 1]?.start || ''
-        setPeriodStart(current)
+        const current = p[p.length - 1]
+        setPeriodStart(current?.start || '')
         return refreshBudgets(current)
       })
       .finally(() => setLoading(false))
@@ -32,12 +41,12 @@ export default function Budgets() {
 
   function handlePeriodChange(start) {
     setPeriodStart(start)
-    refreshBudgets(start)
+    refreshBudgets(periods.find((p) => p.start === start))
   }
 
   async function handleSave(id, amount) {
-    await updateBudget(id, { amount })
-    refreshBudgets(periodStart)
+    await updateBudget(id, { amount }, periodStart ? { period_start: periodStart } : {})
+    refreshBudgets(periods.find((p) => p.start === periodStart))
   }
 
   if (loading) return <Loading />
@@ -61,6 +70,7 @@ export default function Budgets() {
           Cadastre uma categoria de despesa para ela aparecer aqui como orçamento.
         </p>
       )}
+      <BudgetSummary byCurrency={summary} />
       <BudgetList budgets={budgets} categories={categories} onSave={handleSave} />
     </div>
   )
