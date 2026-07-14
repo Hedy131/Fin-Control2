@@ -5,6 +5,7 @@ import { listCategories } from '../api/categories.js'
 import { listPeriods } from '../api/periods.js'
 import BudgetList from '../components/Budgets/BudgetList.jsx'
 import BudgetSummary from '../components/Budgets/BudgetSummary.jsx'
+import BudgetOverview from '../components/Budgets/BudgetOverview.jsx'
 import Loading from '../components/Common/Loading.jsx'
 import { formatPeriodLabel } from '../utils/period.js'
 
@@ -70,6 +71,7 @@ export default function Budgets() {
           Cadastre uma categoria de despesa para ela aparecer aqui como orçamento.
         </p>
       )}
+      <BudgetOverview budgets={budgets} />
       <BudgetSummary byCurrency={summary} />
       <BudgetList budgets={budgets} categories={categories} onSave={handleSave} />
     </div>
