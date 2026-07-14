@@ -1,6 +1,12 @@
 import { formatCurrency } from '../../utils/currency.js'
 
-export default function BudgetOverview({ budgets }) {
+function amountLabel(byCurrency, key) {
+  const parts = (byCurrency || []).filter((row) => (row[key] || 0) > 0)
+  if (parts.length === 0) return formatCurrency(0)
+  return parts.map((row) => formatCurrency(row[key], row.currency)).join(' + ')
+}
+
+export default function BudgetOverview({ budgets, summary }) {
   if (!budgets || budgets.length === 0) return null
 
   const totalExcess = budgets.reduce((sum, b) => sum + Math.max(0, (b.spent || 0) - (b.amount || 0)), 0)
@@ -22,6 +28,18 @@ export default function BudgetOverview({ budgets }) {
         <p className={`text-lg font-bold ${diff > 0 ? 'text-red-600' : 'text-green-600'}`}>
           {formatCurrency(diff)}
         </p>
+      </div>
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <p className="text-xs font-medium text-gray-400 mb-1">Despesas</p>
+        <p className="text-lg font-bold text-red-600">{amountLabel(summary, 'expense')}</p>
+      </div>
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <p className="text-xs font-medium text-gray-400 mb-1">Investimentos</p>
+        <p className="text-lg font-bold text-blue-600">{amountLabel(summary, 'investment')}</p>
+      </div>
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <p className="text-xs font-medium text-gray-400 mb-1">Poupanças</p>
+        <p className="text-lg font-bold text-emerald-600">{amountLabel(summary, 'savings')}</p>
       </div>
     </div>
   )
