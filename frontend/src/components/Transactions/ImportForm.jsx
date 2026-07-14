@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { previewImport } from '../../api/imports.js'
+import { extractErrorMessage } from '../../utils/errors.js'
 
 export default function ImportForm({ onExtracted, onCancel }) {
   const [file, setFile] = useState(null)
@@ -15,7 +16,7 @@ export default function ImportForm({ onExtracted, onCancel }) {
       const data = await previewImport(file)
       onExtracted(data.rows)
     } catch (err) {
-      setError(err?.response?.data?.detail || 'Não foi possível ler este ficheiro.')
+      setError(extractErrorMessage(err, 'Não foi possível ler este ficheiro.'))
     } finally {
       setLoading(false)
     }

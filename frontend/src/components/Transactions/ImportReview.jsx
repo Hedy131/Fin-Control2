@@ -2,6 +2,7 @@ import { useState } from 'react'
 import CurrencyInput from '../Common/CurrencyInput.jsx'
 import { TRANSACTION_TYPES } from '../../utils/categoryTypes.js'
 import { confirmImport } from '../../api/imports.js'
+import { extractErrorMessage } from '../../utils/errors.js'
 
 function toRowState(row, index) {
   return {
@@ -57,7 +58,7 @@ export default function ImportReview({ rows: initialRows, accounts, categories, 
       const result = await confirmImport(payload)
       onImported(result.created)
     } catch (err) {
-      setError(err?.response?.data?.detail || 'Não foi possível gravar as transações.')
+      setError(extractErrorMessage(err, 'Não foi possível gravar as transações.'))
     } finally {
       setSaving(false)
     }

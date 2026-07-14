@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
+import { extractErrorMessage } from '../utils/errors.js'
 
 export default function Login() {
   const { login } = useAuth()
@@ -22,7 +23,7 @@ export default function Login() {
       navigate('/')
     } catch (err) {
       if (err.response) {
-        setError(err.response.data?.detail || 'PIN incorreto')
+        setError(extractErrorMessage(err, 'PIN incorreto'))
       } else if (err.code === 'ECONNABORTED') {
         setError('O servidor demorou demasiado a responder. Se acabou de aceder pela primeira vez, aguarde uns segundos (o servidor pode estar a "acordar") e tente novamente.')
       } else {

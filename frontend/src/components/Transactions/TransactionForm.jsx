@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import CurrencyInput from '../Common/CurrencyInput.jsx'
 import { TRANSACTION_TYPES } from '../../utils/categoryTypes.js'
+import { extractErrorMessage } from '../../utils/errors.js'
 
 function nowTime() {
   return new Date().toTimeString().slice(0, 5)
@@ -40,7 +41,7 @@ export default function TransactionForm({ accounts, categories, initialValues, o
         time: time ? `${time}:00` : null,
       })
     } catch (err) {
-      setError(err?.response?.data?.detail || 'Não foi possível gravar a transação.')
+      setError(extractErrorMessage(err, 'Não foi possível gravar a transação.'))
     } finally {
       setSaving(false)
     }

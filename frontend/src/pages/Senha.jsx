@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { changePin } from '../api/auth.js'
+import { extractErrorMessage } from '../utils/errors.js'
 
 export default function Senha() {
   const [currentPin, setCurrentPin] = useState('')
@@ -35,7 +36,7 @@ export default function Senha() {
       setNewPin('')
       setConfirmPin('')
     } catch (err) {
-      setError(err?.response?.data?.detail || 'Não foi possível alterar o PIN.')
+      setError(extractErrorMessage(err, 'Não foi possível alterar o PIN.'))
     } finally {
       setLoading(false)
     }
