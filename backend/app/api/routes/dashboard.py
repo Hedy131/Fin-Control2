@@ -10,13 +10,8 @@ from app.models.transaction import Transaction
 from app.models.enums import TransactionType
 from app.models.category import Category
 from app.schemas.dashboard import DashboardSummary, CategorySummary, CurrencyBalance, PeriodSummary
-from app.crud.account import compute_balance
-from app.crud.period import (
-    get_current_period,
-    get_last_n_periods,
-    sum_transactions_by_currency,
-    sum_cross_currency_transfers_out,
-)
+from app.crud.account import compute_balances_for_accounts
+from app.crud.period import get_last_n_periods, get_transactions_grouped_by_date, bucket_by_period
 from app.crud.aggregates import group_amounts_by_currency
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
@@ -52,23 +47,37 @@ def _balance_rows(income_rows, expense_rows, investment_rows, savings_rows, cros
 @router.get("/summary", response_model=DashboardSummary)
 def get_summary(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     accounts = db.query(Account).filter(Account.user_id == current_user.id).all()
+    balances = compute_balances_for_accounts(db, accounts)
     balances_by_currency: dict = {}
     for a in accounts:
         currency = a.currency.value if hasattr(a.currency, "value") else a.currency
-        balances_by_currency[currency] = balances_by_currency.get(currency, 0.0) + compute_balance(db, a)
+        balances_by_currency[currency] = balances_by_currency.get(currency, 0.0) + balances.get(a.id, 0.0)
     total_balance_by_currency = [
         CurrencyBalance(currency=c, total=round(v, 2)) for c, v in balances_by_currency.items()
     ]
 
-    current = get_current_period(db, current_user.id)
-    income_rows = sum_transactions_by_currency(db, current_user.id, TransactionType.income, current)
-    expense_rows = sum_transactions_by_currency(db, current_user.id, TransactionType.expense, current)
-    investment_rows = sum_transactions_by_currency(db, current_user.id, TransactionType.investment, current)
-    savings_rows = sum_transactions_by_currency(db, current_user.id, TransactionType.savings, current)
-    cross_transfer_rows = sum_cross_currency_transfers_out(db, current_user.id, current)
-    period_income_by_currency, period_expense_by_currency, period_balance_by_currency = _balance_rows(
-        income_rows, expense_rows, investment_rows, savings_rows, cross_transfer_rows
+    periods = get_last_n_periods(db, current_user.id, n=6)
+    current = periods[-1]
+    since = periods[0].start
+
+    income_grouped = get_transactions_grouped_by_date(db, current_user.id, TransactionType.income, since)
+    expense_grouped = get_transactions_grouped_by_date(db, current_user.id, TransactionType.expense, since)
+    investment_grouped = get_transactions_grouped_by_date(db, current_user.id, TransactionType.investment, since)
+    savings_grouped = get_transactions_grouped_by_date(db, current_user.id, TransactionType.savings, since)
+    cross_transfer_grouped = get_transactions_grouped_by_date(
+        db, current_user.id, TransactionType.transfer, since, cross_currency_transfers_only=True
     )
+
+    def balance_for(period):
+        return _balance_rows(
+            bucket_by_period(income_grouped, period),
+            bucket_by_period(expense_grouped, period),
+            bucket_by_period(investment_grouped, period),
+            bucket_by_period(savings_grouped, period),
+            bucket_by_period(cross_transfer_grouped, period),
+        )
+
+    period_income_by_currency, period_expense_by_currency, period_balance_by_currency = balance_for(current)
 
     expenses_by_category_query = (
         db.query(Category.id, Category.name, Category.color, func.coalesce(func.sum(Transaction.amount), 0.0))
@@ -87,15 +96,8 @@ def get_summary(current_user: User = Depends(get_current_user), db: Session = De
     ]
 
     period_trend = []
-    for p in get_last_n_periods(db, current_user.id, n=6):
-        inc_rows = sum_transactions_by_currency(db, current_user.id, TransactionType.income, p)
-        exp_rows = sum_transactions_by_currency(db, current_user.id, TransactionType.expense, p)
-        inv_rows = sum_transactions_by_currency(db, current_user.id, TransactionType.investment, p)
-        sav_rows = sum_transactions_by_currency(db, current_user.id, TransactionType.savings, p)
-        cross_rows = sum_cross_currency_transfers_out(db, current_user.id, p)
-        inc_by_currency, exp_by_currency, bal_by_currency = _balance_rows(
-            inc_rows, exp_rows, inv_rows, sav_rows, cross_rows
-        )
+    for p in periods:
+        inc_by_currency, exp_by_currency, bal_by_currency = balance_for(p)
         period_trend.append(
             PeriodSummary(
                 period_start=p.start,

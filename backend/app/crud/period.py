@@ -171,3 +171,36 @@ def sum_transactions_by_currency(db: Session, user_id: int, type: TransactionTyp
         query = query.filter(Transaction.date <= period.end)
     rows = query.group_by(Account.currency).all()
     return [(c.value if hasattr(c, "value") else c, round(amount or 0.0, 2)) for c, amount in rows]
+
+
+def get_transactions_grouped_by_date(
+    db: Session, user_id: int, type: TransactionType, since: date, cross_currency_transfers_only: bool = False
+) -> List[tuple]:
+    """[(currency_code, date, total)] for a transaction type since `since`, grouped by
+    source account currency and date — one query, bucketed into periods in Python
+    afterwards instead of running one query per period."""
+    query = (
+        db.query(Account.currency, Transaction.date, func.coalesce(func.sum(Transaction.amount), 0.0))
+        .join(Account, Transaction.account_id == Account.id)
+        .filter(
+            Transaction.user_id == user_id,
+            Transaction.type == type,
+            Transaction.date >= since,
+        )
+    )
+    if cross_currency_transfers_only:
+        query = query.filter(Transaction.destination_amount.isnot(None))
+    rows = query.group_by(Account.currency, Transaction.date).all()
+    return [(c.value if hasattr(c, "value") else c, d, round(amount or 0.0, 2)) for c, d, amount in rows]
+
+
+def bucket_by_period(grouped_rows: List[tuple], period: Period) -> List[tuple]:
+    """Sum [(currency, date, amount)] rows falling inside `period` into [(currency, total)]."""
+    totals: dict = {}
+    for currency, d, amount in grouped_rows:
+        if d < period.start:
+            continue
+        if period.end is not None and d > period.end:
+            continue
+        totals[currency] = totals.get(currency, 0.0) + amount
+    return [(c, round(v, 2)) for c, v in totals.items()]

@@ -11,10 +11,7 @@ from app.crud import investment as crud_investment
 router = APIRouter(prefix="/investments", tags=["investments"])
 
 
-def _to_out(db: Session, user_id: int, position) -> InvestmentPositionOut:
-    invested_amount = crud_investment.compute_invested_amount(
-        db, user_id, position.category_id, position.initial_invested_amount
-    )
+def _to_out(position, invested_amount: float) -> InvestmentPositionOut:
     out = InvestmentPositionOut.model_validate(position)
     out.invested_amount = invested_amount
     out.gain_loss = round(position.current_value - invested_amount, 2)
@@ -24,7 +21,14 @@ def _to_out(db: Session, user_id: int, position) -> InvestmentPositionOut:
 
 @router.get("/", response_model=List[InvestmentPositionOut])
 def list_investment_positions(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return [_to_out(db, current_user.id, p) for p in crud_investment.get_investment_positions(db, current_user.id)]
+    positions = crud_investment.get_investment_positions(db, current_user.id)
+    contributed_by_category = crud_investment.compute_contributed_for_categories(
+        db, current_user.id, [p.category_id for p in positions]
+    )
+    return [
+        _to_out(p, round(p.initial_invested_amount + contributed_by_category.get(p.category_id, 0.0), 2))
+        for p in positions
+    ]
 
 
 @router.put("/{position_id}", response_model=InvestmentPositionOut)
@@ -38,4 +42,7 @@ def update_investment_position(
     if not position:
         raise HTTPException(status_code=404, detail="Investment position not found")
     position = crud_investment.update_investment_position(db, position, position_in)
-    return _to_out(db, current_user.id, position)
+    invested_amount = crud_investment.compute_invested_amount(
+        db, current_user.id, position.category_id, position.initial_invested_amount
+    )
+    return _to_out(position, invested_amount)

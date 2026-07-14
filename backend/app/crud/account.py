@@ -79,3 +79,46 @@ def compute_balance(db: Session, account: Account) -> float:
         + transfer_in,
         2,
     )
+
+
+def _grouped_sum(db: Session, account_ids: list, type: TransactionType, column="account_id") -> dict:
+    if column == "account_id":
+        filter_col = Transaction.account_id
+        amount_expr = Transaction.amount
+    else:
+        filter_col = Transaction.destination_account_id
+        amount_expr = func.coalesce(Transaction.destination_amount, Transaction.amount)
+    rows = (
+        db.query(filter_col, func.coalesce(func.sum(amount_expr), 0.0))
+        .filter(filter_col.in_(account_ids), Transaction.type == type)
+        .group_by(filter_col)
+        .all()
+    )
+    return {account_id: amount for account_id, amount in rows}
+
+
+def compute_balances_for_accounts(db: Session, accounts: list) -> dict:
+    """Balance for every account in one batch (6 queries total instead of 6 per account)."""
+    ids = [a.id for a in accounts]
+    if not ids:
+        return {}
+    income = _grouped_sum(db, ids, TransactionType.income)
+    expense = _grouped_sum(db, ids, TransactionType.expense)
+    investment_out = _grouped_sum(db, ids, TransactionType.investment)
+    savings_out = _grouped_sum(db, ids, TransactionType.savings)
+    transfer_out = _grouped_sum(db, ids, TransactionType.transfer)
+    transfer_in = _grouped_sum(db, ids, TransactionType.transfer, column="destination_account_id")
+
+    return {
+        a.id: round(
+            a.initial_balance
+            + income.get(a.id, 0.0)
+            - expense.get(a.id, 0.0)
+            - investment_out.get(a.id, 0.0)
+            - savings_out.get(a.id, 0.0)
+            - transfer_out.get(a.id, 0.0)
+            + transfer_in.get(a.id, 0.0),
+            2,
+        )
+        for a in accounts
+    }

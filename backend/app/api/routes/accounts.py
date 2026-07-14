@@ -14,10 +14,11 @@ router = APIRouter(prefix="/accounts", tags=["accounts"])
 @router.get("/", response_model=List[AccountOut])
 def list_accounts(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     accounts = crud_account.get_accounts(db, current_user.id)
+    balances = crud_account.compute_balances_for_accounts(db, accounts)
     result = []
     for acc in accounts:
         out = AccountOut.model_validate(acc)
-        out.current_balance = crud_account.compute_balance(db, acc)
+        out.current_balance = balances.get(acc.id, 0.0)
         result.append(out)
     return result
 

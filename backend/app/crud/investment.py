@@ -1,9 +1,11 @@
 from datetime import date
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.investment import InvestmentPosition
 from app.models.category import Category
+from app.models.transaction import Transaction
 from app.models.enums import TransactionType
 from app.schemas.investment import InvestmentPositionUpdate
 from app.crud.period import Period, sum_transactions
@@ -59,3 +61,20 @@ def update_investment_position(db: Session, position: InvestmentPosition, positi
 def compute_invested_amount(db: Session, user_id: int, category_id: int, initial_invested_amount: float) -> float:
     contributed = sum_transactions(db, user_id, TransactionType.investment, ALL_TIME, category_id=category_id)
     return round(initial_invested_amount + contributed, 2)
+
+
+def compute_contributed_for_categories(db: Session, user_id: int, category_ids: list) -> dict:
+    """all-time invested contributions per category_id in one grouped query."""
+    if not category_ids:
+        return {}
+    rows = (
+        db.query(Transaction.category_id, func.coalesce(func.sum(Transaction.amount), 0.0))
+        .filter(
+            Transaction.user_id == user_id,
+            Transaction.type == TransactionType.investment,
+            Transaction.category_id.in_(category_ids),
+        )
+        .group_by(Transaction.category_id)
+        .all()
+    )
+    return {category_id: round(amount or 0.0, 2) for category_id, amount in rows}

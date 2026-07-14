@@ -1,7 +1,9 @@
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.budget import Budget
 from app.models.category import Category
+from app.models.transaction import Transaction
 from app.models.enums import TransactionType
 from app.schemas.budget import BudgetUpdate
 from app.crud.period import Period, sum_transactions
@@ -50,3 +52,19 @@ def update_budget(db: Session, budget: Budget, budget_in: BudgetUpdate):
 
 def compute_spent(db: Session, user_id: int, category_id: int, period: Period) -> float:
     return sum_transactions(db, user_id, TransactionType.expense, period, category_id=category_id)
+
+
+def compute_spent_for_categories(db: Session, user_id: int, category_ids: list, period: Period) -> dict:
+    """spent per category_id in one grouped query instead of one query per budget."""
+    if not category_ids:
+        return {}
+    query = db.query(Transaction.category_id, func.coalesce(func.sum(Transaction.amount), 0.0)).filter(
+        Transaction.user_id == user_id,
+        Transaction.type == TransactionType.expense,
+        Transaction.category_id.in_(category_ids),
+        Transaction.date >= period.start,
+    )
+    if period.end is not None:
+        query = query.filter(Transaction.date <= period.end)
+    rows = query.group_by(Transaction.category_id).all()
+    return {category_id: round(amount or 0.0, 2) for category_id, amount in rows}

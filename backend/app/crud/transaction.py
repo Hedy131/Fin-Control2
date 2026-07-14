@@ -212,12 +212,20 @@ def bulk_update_transactions(db: Session, user_id: int, ids: list[int], updates:
     transactions = (
         db.query(Transaction).filter(Transaction.user_id == user_id, Transaction.id.in_(ids)).all()
     )
+
+    category_ids = {t.category_id for t in transactions if t.category_id is not None}
+    if "category_id" in updates and updates["category_id"] is not None:
+        category_ids.add(updates["category_id"])
+    categories = (
+        {c.id: c for c in db.query(Category).filter(Category.id.in_(category_ids)).all()} if category_ids else {}
+    )
+
     for transaction in transactions:
         for field, value in updates.items():
             setattr(transaction, field, value)
         effective_type = updates.get("type", transaction.type)
         if transaction.category_id is not None:
-            category = db.query(Category).filter(Category.id == transaction.category_id).first()
+            category = categories.get(transaction.category_id)
             if category is not None and effective_type not in (category.types or []):
                 transaction.category_id = None
     db.commit()

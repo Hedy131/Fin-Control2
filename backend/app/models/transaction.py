@@ -12,15 +12,15 @@ class Transaction(Base):
     __tablename__ = "transactions"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
-    destination_account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True)
-    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
-    type = Column(transaction_type_enum, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False, index=True)
+    destination_account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True, index=True)
+    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True, index=True)
+    type = Column(transaction_type_enum, nullable=False, index=True)
     amount = Column(Float, nullable=False)
     destination_amount = Column(Float, nullable=True)
     description = Column(String, nullable=True)
-    date = Column(Date, nullable=False)
+    date = Column(Date, nullable=False, index=True)
     time = Column(Time, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

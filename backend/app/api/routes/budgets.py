@@ -37,7 +37,23 @@ def list_budgets(
 ):
     resolved_period_start = period_start or get_current_period(db, current_user.id).start
     budgets = crud_budget.get_budgets(db, current_user.id)
-    return [_to_out(db, current_user.id, b, resolved_period_start) for b in budgets]
+    period_end = resolve_period_end(db, current_user.id, resolved_period_start)
+    period = Period(start=resolved_period_start, end=period_end)
+    spent_by_category = crud_budget.compute_spent_for_categories(
+        db, current_user.id, [b.category_id for b in budgets], period
+    )
+    return [
+        BudgetOut(
+            id=b.id,
+            user_id=b.user_id,
+            category_id=b.category_id,
+            amount=b.amount,
+            period_start=resolved_period_start,
+            period_end=period_end,
+            spent=spent_by_category.get(b.category_id, 0.0),
+        )
+        for b in budgets
+    ]
 
 
 @router.put("/{budget_id}", response_model=BudgetOut)
