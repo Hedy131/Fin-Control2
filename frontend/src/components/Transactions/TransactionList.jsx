@@ -85,13 +85,15 @@ export default function TransactionList({
                 {editingId === t.id && (
                   <tr>
                     <td colSpan={7} className="bg-gray-50 px-4 py-4 border-t border-gray-100">
-                      <TransactionForm
-                        accounts={accounts}
-                        categories={categories}
-                        initialValues={editInitialValues}
-                        onSubmit={onEditSubmit}
-                        onCancel={onEditCancel}
-                      />
+                      <div className="max-w-md">
+                        <TransactionForm
+                          accounts={accounts}
+                          categories={categories}
+                          initialValues={editInitialValues}
+                          onSubmit={onEditSubmit}
+                          onCancel={onEditCancel}
+                        />
+                      </div>
                     </td>
                   </tr>
                 )}
