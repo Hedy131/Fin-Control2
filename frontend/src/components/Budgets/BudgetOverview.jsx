@@ -6,40 +6,40 @@ function amountLabel(byCurrency, key) {
   return parts.map((row) => formatCurrency(row[key], row.currency)).join(' + ')
 }
 
+function Card({ label, value, className }) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+      <p className="text-xs font-medium text-gray-400 mb-1">{label}</p>
+      <p className={`text-lg font-bold ${className || 'text-gray-900'}`}>{value}</p>
+    </div>
+  )
+}
+
 export default function BudgetOverview({ budgets, summary }) {
   if (!budgets || budgets.length === 0) return null
 
+  const totalBudget = budgets.reduce((sum, b) => sum + (b.amount || 0), 0)
   const totalExcess = budgets.reduce((sum, b) => sum + Math.max(0, (b.spent || 0) - (b.amount || 0)), 0)
   const totalRemaining = budgets.reduce((sum, b) => sum + Math.max(0, (b.amount || 0) - (b.spent || 0)), 0)
-  const diff = totalExcess - totalRemaining
+  const rawDiff = totalExcess - totalRemaining
+  const diff = Math.max(0, rawDiff)
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-        <p className="text-xs font-medium text-gray-400 mb-1">Total Excedente</p>
-        <p className="text-lg font-bold text-red-600">{formatCurrency(totalExcess)}</p>
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card label="Despesas" value={amountLabel(summary, 'expense')} className="text-red-600" />
+        <Card label="Investimentos" value={amountLabel(summary, 'investment')} className="text-blue-600" />
+        <Card label="Poupanças" value={amountLabel(summary, 'savings')} className="text-emerald-600" />
       </div>
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-        <p className="text-xs font-medium text-gray-400 mb-1">Total para Atingir o Limite</p>
-        <p className="text-lg font-bold text-green-600">{formatCurrency(totalRemaining)}</p>
-      </div>
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-        <p className="text-xs font-medium text-gray-400 mb-1">Diferença (Excedente − Falta)</p>
-        <p className={`text-lg font-bold ${diff > 0 ? 'text-red-600' : 'text-green-600'}`}>
-          {formatCurrency(diff)}
-        </p>
-      </div>
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-        <p className="text-xs font-medium text-gray-400 mb-1">Despesas</p>
-        <p className="text-lg font-bold text-red-600">{amountLabel(summary, 'expense')}</p>
-      </div>
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-        <p className="text-xs font-medium text-gray-400 mb-1">Investimentos</p>
-        <p className="text-lg font-bold text-blue-600">{amountLabel(summary, 'investment')}</p>
-      </div>
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-        <p className="text-xs font-medium text-gray-400 mb-1">Poupanças</p>
-        <p className="text-lg font-bold text-emerald-600">{amountLabel(summary, 'savings')}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card label="Orçamento" value={formatCurrency(totalBudget)} />
+        <Card label="Total Excedente" value={formatCurrency(totalExcess)} className="text-red-600" />
+        <Card label="Total para Atingir o Limite" value={formatCurrency(totalRemaining)} className="text-green-600" />
+        <Card
+          label="Diferença (Excedente − Falta)"
+          value={formatCurrency(diff)}
+          className={rawDiff > 0 ? 'text-red-600' : 'text-green-600'}
+        />
       </div>
     </div>
   )
