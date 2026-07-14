@@ -1,6 +1,6 @@
 from pydantic import BaseModel, model_validator
 from typing import List, Optional
-from datetime import date, datetime, time as time_of_day
+from datetime import date as date_type, datetime, time as time_of_day
 
 from app.models.enums import TransactionType
 
@@ -12,7 +12,7 @@ class TransactionBase(BaseModel):
     type: TransactionType
     amount: float
     description: Optional[str] = None
-    date: date
+    date: date_type
     time: Optional[time_of_day] = None
 
     @model_validator(mode="after")
@@ -38,7 +38,7 @@ class TransactionUpdate(BaseModel):
     type: Optional[TransactionType] = None
     amount: Optional[float] = None
     description: Optional[str] = None
-    date: Optional[date] = None
+    date: Optional[date_type] = None
     time: Optional[time_of_day] = None
 
 
