@@ -50,8 +50,14 @@ def delete_account(db: Session, account: Account):
 
 
 def _sum(db: Session, account_id: int, type: TransactionType, column="account_id") -> float:
-    filter_col = Transaction.account_id if column == "account_id" else Transaction.destination_account_id
-    return db.query(func.coalesce(func.sum(Transaction.amount), 0.0)).filter(
+    if column == "account_id":
+        filter_col = Transaction.account_id
+        amount_expr = Transaction.amount
+    else:
+        filter_col = Transaction.destination_account_id
+        # transferências entre moedas diferentes gravam o valor convertido em destination_amount
+        amount_expr = func.coalesce(Transaction.destination_amount, Transaction.amount)
+    return db.query(func.coalesce(func.sum(amount_expr), 0.0)).filter(
         filter_col == account_id, Transaction.type == type
     ).scalar()
 

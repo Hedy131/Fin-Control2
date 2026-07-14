@@ -9,6 +9,7 @@ from app.models.category import Category
 from app.models.account import Account
 from app.models.enums import TransactionType
 from app.schemas.transaction import TransactionCreate, TransactionUpdate
+from app.services import fx
 
 
 def validate_transaction_category(db: Session, category_id: Optional[int], type: TransactionType) -> None:
@@ -27,6 +28,28 @@ def _validate_transfer_fields(effective_type, effective_account_id, effective_de
             raise ValueError("destination_account_id deve ser diferente de account_id")
     elif effective_destination_id is not None:
         raise ValueError("destination_account_id só é permitido para transferências")
+
+
+def _resolve_destination_amount(
+    db: Session, account_id: Optional[int], destination_account_id: Optional[int], amount: float, type: TransactionType
+) -> Optional[float]:
+    """Para transferências entre contas de moedas diferentes, converte o valor
+    à taxa de câmbio atual (via API) para gravar quanto a conta destino recebe."""
+    if type != TransactionType.transfer or not destination_account_id:
+        return None
+    source = db.query(Account).filter(Account.id == account_id).first()
+    destination = db.query(Account).filter(Account.id == destination_account_id).first()
+    if source is None or destination is None:
+        return None
+    source_currency = source.currency.value if hasattr(source.currency, "value") else source.currency
+    dest_currency = destination.currency.value if hasattr(destination.currency, "value") else destination.currency
+    if source_currency == dest_currency:
+        return None
+    rates = fx.get_rates(source_currency)
+    rate = rates["rates"].get(dest_currency)
+    if rate is None:
+        raise ValueError(f"Taxa de câmbio indisponível para {source_currency} -> {dest_currency}")
+    return round(amount * rate, 2)
 
 
 def _build_filtered_query(
@@ -132,6 +155,9 @@ def create_transaction(db: Session, user_id: int, transaction_in: TransactionCre
     data = transaction_in.model_dump()
     if data.get("time") is None:
         data["time"] = datetime.now().time()
+    data["destination_amount"] = _resolve_destination_amount(
+        db, data["account_id"], data.get("destination_account_id"), data["amount"], data["type"]
+    )
     transaction = Transaction(user_id=user_id, **data)
     db.add(transaction)
     db.commit()
@@ -148,12 +174,18 @@ def update_transaction(db: Session, transaction: Transaction, transaction_in: Tr
     effective_destination_id = (
         updates["destination_account_id"] if "destination_account_id" in updates else transaction.destination_account_id
     )
+    effective_amount = updates["amount"] if "amount" in updates else transaction.amount
 
     validate_transaction_category(db, effective_category_id, effective_type)
     _validate_transfer_fields(effective_type, effective_account_id, effective_destination_id)
 
     for field, value in updates.items():
         setattr(transaction, field, value)
+
+    transaction.destination_amount = _resolve_destination_amount(
+        db, effective_account_id, effective_destination_id, effective_amount, effective_type
+    )
+
     db.commit()
     db.refresh(transaction)
     return transaction

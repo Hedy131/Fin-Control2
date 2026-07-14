@@ -45,6 +45,7 @@ class TransactionUpdate(BaseModel):
 class TransactionOut(TransactionBase):
     id: int
     user_id: int
+    destination_amount: Optional[float] = None
     created_at: datetime
 
     class Config:

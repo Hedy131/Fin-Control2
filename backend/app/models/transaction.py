@@ -18,6 +18,7 @@ class Transaction(Base):
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     type = Column(transaction_type_enum, nullable=False)
     amount = Column(Float, nullable=False)
+    destination_amount = Column(Float, nullable=True)
     description = Column(String, nullable=True)
     date = Column(Date, nullable=False)
     time = Column(Time, nullable=True)

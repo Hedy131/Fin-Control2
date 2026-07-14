@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import CurrencyInput from '../Common/CurrencyInput.jsx'
 import { TRANSACTION_TYPES } from '../../utils/categoryTypes.js'
 import { extractErrorMessage } from '../../utils/errors.js'
+import { getFxRates } from '../../api/fx.js'
 
 function nowTime() {
   return new Date().toTimeString().slice(0, 5)
@@ -54,6 +55,31 @@ export default function TransactionForm({ accounts, categories, initialValues, o
   const showCurrencyWarning =
     type === 'transfer' && sourceAccount && destAccount && sourceAccount.currency !== destAccount.currency
 
+  const [fxRate, setFxRate] = useState(null)
+  const [fxLoading, setFxLoading] = useState(false)
+
+  useEffect(() => {
+    if (!showCurrencyWarning) {
+      setFxRate(null)
+      return
+    }
+    let cancelled = false
+    setFxLoading(true)
+    getFxRates(sourceAccount.currency)
+      .then((data) => {
+        if (!cancelled) setFxRate(data.rates[destAccount.currency] ?? null)
+      })
+      .catch(() => {
+        if (!cancelled) setFxRate(null)
+      })
+      .finally(() => {
+        if (!cancelled) setFxLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [showCurrencyWarning, sourceAccount?.currency, destAccount?.currency])
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
@@ -83,7 +109,14 @@ export default function TransactionForm({ accounts, categories, initialValues, o
           </select>
           {showCurrencyWarning && (
             <p className="text-xs text-amber-600 mt-1">
-              Contas com moedas diferentes — o valor será movido sem conversão.
+              {fxLoading && 'A obter taxa de câmbio...'}
+              {!fxLoading && fxRate && (
+                <>
+                  ≈ {(amount * fxRate).toLocaleString('pt-PT', { maximumFractionDigits: 2 })} {destAccount.currency} à taxa atual
+                  {' '}(1 {sourceAccount.currency} = {fxRate.toLocaleString('pt-PT', { maximumFractionDigits: 6 })} {destAccount.currency})
+                </>
+              )}
+              {!fxLoading && !fxRate && 'Não foi possível obter a taxa de câmbio agora — será calculada ao gravar.'}
             </p>
           )}
         </div>

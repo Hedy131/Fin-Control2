@@ -61,6 +61,8 @@ export default function TransactionList({
                     {t.type === 'transfer' && (
                       <span className="block text-xs text-gray-400">
                         → {accountName(t.destination_account_id)}
+                        {t.destination_amount != null &&
+                          ` (${formatCurrency(t.destination_amount, account(t.destination_account_id)?.currency)})`}
                       </span>
                     )}
                   </td>
