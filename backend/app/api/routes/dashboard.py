@@ -17,14 +17,24 @@ from app.crud.aggregates import group_amounts_by_currency
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
-def _balance_rows(income_rows, expense_rows):
+def _balance_rows(income_rows, expense_rows, investment_rows, savings_rows):
     income = group_amounts_by_currency(income_rows)
     expense = group_amounts_by_currency(expense_rows)
-    currencies = set(income) | set(expense)
+    investment = group_amounts_by_currency(investment_rows)
+    savings = group_amounts_by_currency(savings_rows)
+    currencies = set(income) | set(expense) | set(investment) | set(savings)
     return (
         [CurrencyBalance(currency=c, total=income.get(c, 0.0)) for c in currencies],
         [CurrencyBalance(currency=c, total=expense.get(c, 0.0)) for c in currencies],
-        [CurrencyBalance(currency=c, total=round(income.get(c, 0.0) - expense.get(c, 0.0), 2)) for c in currencies],
+        [
+            CurrencyBalance(
+                currency=c,
+                total=round(
+                    income.get(c, 0.0) - expense.get(c, 0.0) - investment.get(c, 0.0) - savings.get(c, 0.0), 2
+                ),
+            )
+            for c in currencies
+        ],
     )
 
 
@@ -42,8 +52,10 @@ def get_summary(current_user: User = Depends(get_current_user), db: Session = De
     current = get_current_period(db, current_user.id)
     income_rows = sum_transactions_by_currency(db, current_user.id, TransactionType.income, current)
     expense_rows = sum_transactions_by_currency(db, current_user.id, TransactionType.expense, current)
+    investment_rows = sum_transactions_by_currency(db, current_user.id, TransactionType.investment, current)
+    savings_rows = sum_transactions_by_currency(db, current_user.id, TransactionType.savings, current)
     period_income_by_currency, period_expense_by_currency, period_balance_by_currency = _balance_rows(
-        income_rows, expense_rows
+        income_rows, expense_rows, investment_rows, savings_rows
     )
 
     expenses_by_category_query = (
@@ -66,7 +78,9 @@ def get_summary(current_user: User = Depends(get_current_user), db: Session = De
     for p in get_last_n_periods(db, current_user.id, n=6):
         inc_rows = sum_transactions_by_currency(db, current_user.id, TransactionType.income, p)
         exp_rows = sum_transactions_by_currency(db, current_user.id, TransactionType.expense, p)
-        inc_by_currency, exp_by_currency, bal_by_currency = _balance_rows(inc_rows, exp_rows)
+        inv_rows = sum_transactions_by_currency(db, current_user.id, TransactionType.investment, p)
+        sav_rows = sum_transactions_by_currency(db, current_user.id, TransactionType.savings, p)
+        inc_by_currency, exp_by_currency, bal_by_currency = _balance_rows(inc_rows, exp_rows, inv_rows, sav_rows)
         period_trend.append(
             PeriodSummary(
                 period_start=p.start,
