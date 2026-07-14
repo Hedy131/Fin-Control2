@@ -204,7 +204,7 @@ export default function Transactions() {
           Cadastre uma conta antes de lançar transações.
         </p>
       )}
-      {showForm && (
+      {showForm && editingId === null && (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 max-w-md">
           <TransactionForm
             accounts={accounts}
@@ -249,6 +249,10 @@ export default function Transactions() {
         onEdit={openEditForm}
         onDuplicate={openDuplicateForm}
         onDelete={handleDelete}
+        editingId={editingId}
+        editInitialValues={formInitialValues}
+        onEditSubmit={handleSubmit}
+        onEditCancel={closeForm}
       />
     </div>
   )
