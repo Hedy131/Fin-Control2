@@ -136,6 +136,25 @@ def sum_transactions(
     return round(query.scalar(), 2)
 
 
+def sum_cross_currency_transfers_out(db: Session, user_id: int, period: Period) -> List[tuple]:
+    """[(currency_code, total)] of the source-side amount for transfers that moved
+    money into a different-currency account (destination_amount set), within a period."""
+    query = (
+        db.query(Account.currency, func.coalesce(func.sum(Transaction.amount), 0.0))
+        .join(Account, Transaction.account_id == Account.id)
+        .filter(
+            Transaction.user_id == user_id,
+            Transaction.type == TransactionType.transfer,
+            Transaction.destination_amount.isnot(None),
+            Transaction.date >= period.start,
+        )
+    )
+    if period.end is not None:
+        query = query.filter(Transaction.date <= period.end)
+    rows = query.group_by(Account.currency).all()
+    return [(c.value if hasattr(c, "value") else c, round(amount or 0.0, 2)) for c, amount in rows]
+
+
 def sum_transactions_by_currency(db: Session, user_id: int, type: TransactionType, period: Period) -> List[tuple]:
     """[(currency_code, total)] for a transaction type within a period, grouped by the
     currency of the transaction's source account."""

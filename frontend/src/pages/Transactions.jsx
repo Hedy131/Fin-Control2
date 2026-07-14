@@ -37,7 +37,13 @@ export default function Transactions() {
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(() => {
     const categoryId = searchParams.get('category_id')
-    return categoryId ? { ...EMPTY_FILTERS, category_id: categoryId } : EMPTY_FILTERS
+    const periodStart = searchParams.get('period_start')
+    const periodEnd = searchParams.get('period_end')
+    return {
+      ...EMPTY_FILTERS,
+      ...(categoryId ? { category_id: categoryId } : {}),
+      ...(periodStart ? { period_start: periodStart, start_date: periodStart, end_date: periodEnd || '' } : {}),
+    }
   })
   const [showForm, setShowForm] = useState(false)
   const [formInitialValues, setFormInitialValues] = useState(null)

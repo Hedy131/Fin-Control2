@@ -14,9 +14,16 @@ function BudgetCard({ budget, categoryName, onSave }) {
     if (amount !== budget.amount) onSave(budget.id, amount || 0)
   }
 
+  function handleOpen() {
+    const params = new URLSearchParams({ category_id: budget.category_id })
+    if (budget.period_start) params.set('period_start', budget.period_start)
+    if (budget.period_end) params.set('period_end', budget.period_end)
+    navigate(`/transactions?${params.toString()}`)
+  }
+
   return (
     <div
-      onClick={() => navigate(`/transactions?category_id=${budget.category_id}`)}
+      onClick={handleOpen}
       className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 cursor-pointer transition-colors hover:bg-gray-50 hover:border-primary-200"
     >
       <p className="font-semibold text-gray-900 mb-3">{categoryName}</p>
