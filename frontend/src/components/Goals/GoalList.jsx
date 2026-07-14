@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CurrencyInput from '../Common/CurrencyInput.jsx'
+import ProgressBar from '../Common/ProgressBar.jsx'
 import { formatCurrency, CURRENCIES } from '../../utils/currency.js'
 
 function GoalCard({ goal, category, accounts, onSave }) {
@@ -8,6 +9,7 @@ function GoalCard({ goal, category, accounts, onSave }) {
   const [targetAmount, setTargetAmount] = useState(goal.target_amount)
   const [initialAmount, setInitialAmount] = useState(goal.initial_amount)
   const over = goal.days_remaining !== null && goal.days_remaining !== undefined && goal.days_remaining < 0
+  const excess = goal.progress - goal.target_amount
 
   function saveTargetAmount() {
     if (targetAmount !== goal.target_amount) onSave(goal.id, { target_amount: targetAmount || 0 })
@@ -26,8 +28,11 @@ function GoalCard({ goal, category, accounts, onSave }) {
         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: category?.color || '#6366f1' }} />
         <p className="font-semibold text-gray-900">{category?.name || '-'}</p>
       </div>
-      <div className="w-full bg-gray-100 rounded-full h-2 mb-2">
-        <div className="h-2 rounded-full bg-primary-500" style={{ width: `${Math.min(100, goal.progress_pct || 0)}%` }} />
+      <div className="mb-2">
+        <ProgressBar
+          percent={goal.progress_pct}
+          excessText={excess > 0 ? `${formatCurrency(excess, goal.currency)} acima do alvo` : null}
+        />
       </div>
       <p className="text-sm text-gray-600">
         {formatCurrency(goal.progress, goal.currency)} de {formatCurrency(goal.target_amount, goal.currency)}
