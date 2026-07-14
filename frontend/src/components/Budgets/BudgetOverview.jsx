@@ -35,7 +35,11 @@ export default function BudgetOverview({ budgets, summary }) {
         <Card label="Orçamento" value={formatCurrency(totalBudget)} />
         <Card label="Total Excedente" value={formatCurrency(totalExcess)} className="text-red-600" />
         <Card label="Total para Atingir o Limite" value={formatCurrency(totalRemaining)} className="text-green-600" />
-        <Card label="Diferença (Excedente − Falta)" value={formatCurrency(diff)} className="text-red-600" />
+        <Card
+          label="Diferença (Excedente − Falta)"
+          value={formatCurrency(diff)}
+          className={rawDiff > 0 ? 'text-red-600' : 'text-green-600'}
+        />
       </div>
     </div>
   )
