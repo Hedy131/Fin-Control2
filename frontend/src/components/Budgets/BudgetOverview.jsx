@@ -22,7 +22,7 @@ export default function BudgetOverview({ budgets, summary }) {
   const totalExcess = budgets.reduce((sum, b) => sum + Math.max(0, (b.spent || 0) - (b.amount || 0)), 0)
   const totalRemaining = budgets.reduce((sum, b) => sum + Math.max(0, (b.amount || 0) - (b.spent || 0)), 0)
   const rawDiff = totalExcess - totalRemaining
-  const diff = Math.max(0, rawDiff)
+  const diff = rawDiff < 0 ? rawDiff * -1 : rawDiff
 
   return (
     <div className="space-y-4">
@@ -35,11 +35,7 @@ export default function BudgetOverview({ budgets, summary }) {
         <Card label="Orçamento" value={formatCurrency(totalBudget)} />
         <Card label="Total Excedente" value={formatCurrency(totalExcess)} className="text-red-600" />
         <Card label="Total para Atingir o Limite" value={formatCurrency(totalRemaining)} className="text-green-600" />
-        <Card
-          label="Diferença (Excedente − Falta)"
-          value={formatCurrency(diff)}
-          className={rawDiff > 0 ? 'text-red-600' : 'text-green-600'}
-        />
+        <Card label="Diferença (Excedente − Falta)" value={formatCurrency(diff)} className="text-red-600" />
       </div>
     </div>
   )
