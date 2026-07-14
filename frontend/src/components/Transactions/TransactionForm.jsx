@@ -15,6 +15,8 @@ export default function TransactionForm({ accounts, categories, initialValues, o
   const [description, setDescription] = useState(initialValues?.description || '')
   const [date, setDate] = useState(initialValues?.date || new Date().toISOString().slice(0, 10))
   const [time, setTime] = useState(initialValues?.time?.slice(0, 5) || nowTime())
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
 
   function handleTypeChange(nextType) {
     setType(nextType)
@@ -22,18 +24,26 @@ export default function TransactionForm({ accounts, categories, initialValues, o
     if (nextType !== 'transfer') setDestinationAccountId('')
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
-    onSubmit({
-      account_id: parseInt(accountId, 10),
-      destination_account_id: type === 'transfer' && destinationAccountId ? parseInt(destinationAccountId, 10) : null,
-      category_id: categoryId ? parseInt(categoryId, 10) : null,
-      type,
-      amount: amount || 0,
-      description,
-      date,
-      time: time ? `${time}:00` : null,
-    })
+    setError('')
+    setSaving(true)
+    try {
+      await onSubmit({
+        account_id: parseInt(accountId, 10),
+        destination_account_id: type === 'transfer' && destinationAccountId ? parseInt(destinationAccountId, 10) : null,
+        category_id: categoryId ? parseInt(categoryId, 10) : null,
+        type,
+        amount: amount || 0,
+        description,
+        date,
+        time: time ? `${time}:00` : null,
+      })
+    } catch (err) {
+      setError(err?.response?.data?.detail || 'Não foi possível gravar a transação.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const filteredCategories = categories.filter((c) => c.types.includes(type))
@@ -119,9 +129,12 @@ export default function TransactionForm({ accounts, categories, initialValues, o
           />
         </div>
       </div>
+      {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex justify-end gap-2 pt-2">
-        <button type="button" onClick={onCancel} className="px-4 py-2 text-sm rounded-lg border border-gray-300">Cancelar</button>
-        <button type="submit" className="px-4 py-2 text-sm rounded-lg bg-primary-600 text-white">Salvar</button>
+        <button type="button" onClick={onCancel} disabled={saving} className="px-4 py-2 text-sm rounded-lg border border-gray-300 disabled:opacity-50">Cancelar</button>
+        <button type="submit" disabled={saving} className="px-4 py-2 text-sm rounded-lg bg-primary-600 text-white disabled:opacity-50">
+          {saving ? 'A gravar...' : 'Salvar'}
+        </button>
       </div>
     </form>
   )
