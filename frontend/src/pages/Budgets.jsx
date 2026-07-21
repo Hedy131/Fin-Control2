@@ -5,6 +5,7 @@ import { listCategories } from '../api/categories.js'
 import { listPeriods } from '../api/periods.js'
 import BudgetList from '../components/Budgets/BudgetList.jsx'
 import BudgetOverview from '../components/Budgets/BudgetOverview.jsx'
+import BudgetBottomBar from '../components/Budgets/BudgetBottomBar.jsx'
 import Loading from '../components/Common/Loading.jsx'
 import { formatPeriodLabel } from '../utils/period.js'
 import { useNotifications } from '../context/NotificationContext.jsx'
@@ -75,6 +76,7 @@ export default function Budgets() {
       )}
       <BudgetOverview budgets={budgets} summary={summary} />
       <BudgetList budgets={budgets} categories={categories} onSave={handleSave} />
+      <BudgetBottomBar budgets={budgets} />
     </div>
   )
 }

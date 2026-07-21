@@ -1,4 +1,4 @@
-import { Wallet, PiggyBank, TrendingUp, ShoppingBag, AlertTriangle, Target, Coins } from 'lucide-react'
+import { Wallet, PiggyBank, TrendingUp, ShoppingBag, Coins } from 'lucide-react'
 import { formatCurrency } from '../../utils/currency.js'
 
 function amountLabel(byCurrency, key) {
@@ -52,27 +52,13 @@ export default function BudgetOverview({ budgets, summary }) {
           iconClassName="text-blue-600"
         />
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card
           label="Despesas"
           value={amountLabel(summary, 'expense')}
           className="text-red-600"
           Icon={ShoppingBag}
           iconClassName="text-red-600"
-        />
-        <Card
-          label="Total Excedente"
-          value={formatCurrency(totalExcess)}
-          className="text-red-600"
-          Icon={AlertTriangle}
-          iconClassName="text-red-600"
-        />
-        <Card
-          label="Total para Atingir o Limite"
-          value={formatCurrency(totalRemaining)}
-          className="text-green-600"
-          Icon={Target}
-          iconClassName="text-green-600"
         />
         <Card
           label="Tenho para gastar"

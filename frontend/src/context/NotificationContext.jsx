@@ -12,6 +12,8 @@ const LOW_BUDGET_THRESHOLD = 30000
 const BUDGET_STORAGE_KEY = 'fincontrol_alerted_budgets'
 const DUPLICATE_STORAGE_KEY = 'fincontrol_alerted_duplicates'
 const LOW_BUDGET_STORAGE_KEY = 'fincontrol_alerted_low_budget'
+const REMINDER_STORAGE_KEY = 'fincontrol_alerted_reminder'
+const SAVINGS_REMINDER_DAY = 27
 
 function loadSet(key) {
   try {
@@ -34,10 +36,12 @@ export function NotificationProvider({ children }) {
   const [budgetAlerts, setBudgetAlerts] = useState([])
   const [duplicateAlerts, setDuplicateAlerts] = useState([])
   const [lowBudgetAlerts, setLowBudgetAlerts] = useState([])
+  const [reminderAlerts, setReminderAlerts] = useState([])
   const [toast, setToast] = useState(null)
   const alertedBudgetsRef = useRef(loadSet(BUDGET_STORAGE_KEY))
   const alertedDuplicatesRef = useRef(loadSet(DUPLICATE_STORAGE_KEY))
   const alertedLowBudgetRef = useRef(loadSet(LOW_BUDGET_STORAGE_KEY))
+  const alertedReminderRef = useRef(loadSet(REMINDER_STORAGE_KEY))
 
   const checkBudgets = useCallback(async () => {
     try {
@@ -140,10 +144,35 @@ export function NotificationProvider({ children }) {
     }
   }, [])
 
+  const checkSavingsReminder = useCallback(() => {
+    const today = new Date()
+    if (today.getDate() !== SAVINGS_REMINDER_DAY) {
+      setReminderAlerts([])
+      return
+    }
+
+    const monthKey = `${today.getFullYear()}-${today.getMonth()}`
+    const item = {
+      id: `reminder-${monthKey}`,
+      kind: 'reminder',
+      title: 'Lembrete de poupança',
+      subtitle: 'Hoje é dia 27 — não se esqueça de poupar este mês.',
+    }
+    setReminderAlerts([item])
+
+    if (!alertedReminderRef.current.has(monthKey)) {
+      alertedReminderRef.current.add(monthKey)
+      saveSet(REMINDER_STORAGE_KEY, alertedReminderRef.current)
+      setToast(item)
+      playAlertSound()
+    }
+  }, [])
+
   const checkAll = useCallback(() => {
     checkBudgets()
     checkDuplicates()
-  }, [checkBudgets, checkDuplicates])
+    checkSavingsReminder()
+  }, [checkBudgets, checkDuplicates, checkSavingsReminder])
 
   useEffect(() => {
     if (!user) return
@@ -156,7 +185,7 @@ export function NotificationProvider({ children }) {
     setToast(null)
   }
 
-  const alerts = [...budgetAlerts, ...lowBudgetAlerts, ...duplicateAlerts]
+  const alerts = [...budgetAlerts, ...lowBudgetAlerts, ...duplicateAlerts, ...reminderAlerts]
 
   return (
     <NotificationContext.Provider

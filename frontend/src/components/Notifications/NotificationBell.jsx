@@ -28,9 +28,17 @@ export default function NotificationBell() {
       navigate(`/transactions?${params.toString()}`)
     } else if (a.kind === 'duplicate') {
       navigate('/transactions')
+    } else if (a.kind === 'reminder') {
+      navigate('/metas')
     } else {
       navigate('/budgets')
     }
+  }
+
+  const subtitleColor = (kind) => {
+    if (kind === 'duplicate') return 'text-amber-600'
+    if (kind === 'reminder') return 'text-primary-600'
+    return 'text-red-600'
   }
 
   return (
@@ -63,7 +71,7 @@ export default function NotificationBell() {
                   className="w-full text-left px-4 py-3 hover:bg-gray-50"
                 >
                   <p className="text-sm font-medium text-gray-900">{a.title}</p>
-                  <p className={`text-xs ${a.kind === 'duplicate' ? 'text-amber-600' : 'text-red-600'}`}>
+                  <p className={`text-xs ${subtitleColor(a.kind)}`}>
                     {a.subtitle}
                   </p>
                 </button>

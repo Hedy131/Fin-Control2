@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CurrencyInput from '../Common/CurrencyInput.jsx'
 import ProgressBar from '../Common/ProgressBar.jsx'
-import { formatCurrency, CURRENCIES } from '../../utils/currency.js'
+import { formatCurrency } from '../../utils/currency.js'
 
 function GoalCard({ goal, category, accounts, onSave }) {
   const navigate = useNavigate()
@@ -43,23 +43,9 @@ function GoalCard({ goal, category, accounts, onSave }) {
           {over ? 'Prazo ultrapassado' : `${goal.days_remaining} dias restantes`}
         </p>
       )}
-      <div className="grid grid-cols-2 gap-2 mt-3" onClick={(e) => e.stopPropagation()}>
-        <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Valor Alvo</label>
-          <CurrencyInput value={targetAmount} onChange={setTargetAmount} onBlur={saveTargetAmount} />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Moeda</label>
-          <select
-            value={goal.currency}
-            onChange={(e) => onSave(goal.id, { currency: e.target.value })}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-          >
-            {CURRENCIES.map((c) => (
-              <option key={c.code} value={c.code}>{c.code}</option>
-            ))}
-          </select>
-        </div>
+      <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+        <label className="block text-xs font-medium text-gray-500 mb-1">Valor Alvo</label>
+        <CurrencyInput value={targetAmount} onChange={setTargetAmount} onBlur={saveTargetAmount} />
       </div>
       <div onClick={(e) => e.stopPropagation()}>
         <div className="mt-2">

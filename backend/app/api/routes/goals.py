@@ -15,6 +15,7 @@ router = APIRouter(prefix="/goals", tags=["goals"])
 
 
 def _to_out(goal, progress: float) -> GoalOut:
+    progress = abs(progress)
     out = GoalOut.model_validate(goal)
     out.progress = round(progress, 2)
     out.progress_pct = min(100, round(progress / goal.target_amount * 100, 2)) if goal.target_amount else 0
