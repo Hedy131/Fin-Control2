@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Literal, Optional
 from datetime import date
+from io import BytesIO
 
 from app.core.database import get_db
 from app.api.deps import get_current_user
@@ -21,6 +23,7 @@ from app.schemas.transaction import (
 from app.crud import transaction as crud_transaction
 from app.crud import account as crud_account
 from app.crud import category as crud_category
+from app.services import export as export_service
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
@@ -64,6 +67,35 @@ def get_transactions_summary(
 def get_duplicate_transactions(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     groups = crud_transaction.find_duplicate_groups(db, current_user.id)
     return {"groups": groups}
+
+
+@router.get("/export")
+def export_transactions(
+    format: Literal["xlsx", "pdf"],
+    start_date: date,
+    end_date: date,
+    account_id: Optional[int] = None,
+    category_id: Optional[int] = None,
+    type: Optional[TransactionType] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    rows = crud_transaction.get_transactions_for_export(
+        db, current_user.id, start_date, end_date, account_id, category_id, type
+    )
+    if format == "xlsx":
+        content = export_service.build_transactions_xlsx(rows)
+        media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        filename = f"transacoes_{start_date}_{end_date}.xlsx"
+    else:
+        content = export_service.build_transactions_pdf(rows, start_date, end_date)
+        media_type = "application/pdf"
+        filename = f"transacoes_{start_date}_{end_date}.pdf"
+    return StreamingResponse(
+        BytesIO(content),
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.post("/bulk-delete", response_model=TransactionBulkDeleteResponse)

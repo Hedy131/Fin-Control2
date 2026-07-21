@@ -13,3 +13,7 @@ export async function getMe() {
 export async function changePin(currentPin, newPin) {
   await api.put('/auth/pin', { current_pin: currentPin, new_pin: newPin })
 }
+
+export async function forgotPin() {
+  await api.post('/auth/forgot-pin')
+}

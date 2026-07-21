@@ -8,3 +8,5 @@ export const deleteTransaction = async (id) => (await api.delete(`/transactions/
 export const bulkDeleteTransactions = async (ids) => (await api.post('/transactions/bulk-delete', { ids })).data
 export const bulkUpdateTransactions = async (payload) => (await api.post('/transactions/bulk-update', payload)).data
 export const getDuplicateTransactions = async () => (await api.get('/transactions/duplicates')).data
+export const exportTransactions = async (format, params) =>
+  (await api.get('/transactions/export', { params: { ...params, format }, responseType: 'blob' })).data

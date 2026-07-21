@@ -17,6 +17,7 @@ import TransactionFilters from '../components/Transactions/TransactionFilters.js
 import BulkEditBar from '../components/Transactions/BulkEditBar.jsx'
 import ImportForm from '../components/Transactions/ImportForm.jsx'
 import ImportReview from '../components/Transactions/ImportReview.jsx'
+import ExportPanel from '../components/Transactions/ExportPanel.jsx'
 import Loading from '../components/Common/Loading.jsx'
 import { useNotifications } from '../context/NotificationContext.jsx'
 
@@ -52,6 +53,7 @@ export default function Transactions() {
   const [editingId, setEditingId] = useState(null)
   const [importStep, setImportStep] = useState(null) // null | 'upload' | 'review'
   const [importRows, setImportRows] = useState([])
+  const [showExport, setShowExport] = useState(false)
   const [selectedIds, setSelectedIds] = useState(() => new Set())
   const duplicateIds = useRef(
     (searchParams.get('duplicate_ids') || '')
@@ -136,6 +138,7 @@ export default function Transactions() {
 
   function openCreateForm() {
     closeImport()
+    setShowExport(false)
     setFormInitialValues(null)
     setEditingId(null)
     setShowForm(true)
@@ -181,6 +184,7 @@ export default function Transactions() {
 
   function openImport() {
     closeForm()
+    setShowExport(false)
     setImportRows([])
     setImportStep('upload')
   }
@@ -188,6 +192,12 @@ export default function Transactions() {
   function closeImport() {
     setImportStep(null)
     setImportRows([])
+  }
+
+  function openExport() {
+    closeForm()
+    closeImport()
+    setShowExport(true)
   }
 
   function handleExtracted(rows) {
@@ -208,6 +218,12 @@ export default function Transactions() {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-900">Transações</h2>
         <div className="flex gap-2">
+          <button
+            onClick={() => (showExport ? setShowExport(false) : openExport())}
+            className="px-4 py-2 text-sm rounded-lg border border-gray-300 text-gray-700"
+          >
+            {showExport ? 'Fechar' : 'Exportar'}
+          </button>
           <button
             onClick={() => (importStep ? closeImport() : openImport())}
             disabled={accounts.length === 0}
@@ -256,6 +272,7 @@ export default function Transactions() {
           />
         </div>
       )}
+      {showExport && <ExportPanel filters={filters} onCancel={() => setShowExport(false)} />}
       <TransactionFilters accounts={accounts} categories={categories} periods={periods} filters={filters} onChange={setFilters} />
       <BulkEditBar
         selectedCount={selectedIds.size}

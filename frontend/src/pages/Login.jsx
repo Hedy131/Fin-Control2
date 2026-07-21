@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
+import { forgotPin } from '../api/auth.js'
 import { extractErrorMessage } from '../utils/errors.js'
 
 export default function Login() {
@@ -9,6 +10,8 @@ export default function Login() {
   const [digits, setDigits] = useState(['', '', '', ''])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [recovering, setRecovering] = useState(false)
+  const [recoveryMessage, setRecoveryMessage] = useState('')
   const inputRefs = useRef([])
 
   useEffect(() => {
@@ -57,6 +60,19 @@ export default function Login() {
     }
   }
 
+  async function handleForgotPin() {
+    setRecoveryMessage('')
+    setRecovering(true)
+    try {
+      await forgotPin()
+      setRecoveryMessage('Email enviado com o PIN atual para hedy131.hg@hotmail.com.')
+    } catch (err) {
+      setRecoveryMessage(extractErrorMessage(err, 'Não foi possível enviar o email agora. Tente novamente mais tarde.'))
+    } finally {
+      setRecovering(false)
+    }
+  }
+
   function handlePaste(e) {
     const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4)
     if (!pasted) return
@@ -99,6 +115,17 @@ export default function Login() {
           ))}
         </div>
         {loading && <p className="text-sm text-gray-500">Entrando...</p>}
+        <button
+          type="button"
+          onClick={handleForgotPin}
+          disabled={recovering}
+          className="mt-4 text-sm text-primary-600 hover:text-primary-700 disabled:opacity-50"
+        >
+          {recovering ? 'A enviar...' : 'Recuperar senha'}
+        </button>
+        {recoveryMessage && (
+          <p className="mt-2 text-xs text-gray-500">{recoveryMessage}</p>
+        )}
       </div>
     </div>
   )

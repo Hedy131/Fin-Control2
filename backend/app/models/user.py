@@ -14,6 +14,9 @@ class User(Base):
     pin = Column(String, nullable=True)
     full_name = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
+    failed_login_attempts = Column(Integer, nullable=False, default=0)
+    last_failed_login_at = Column(DateTime(timezone=True), nullable=True)
+    last_recovery_sent_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     accounts = relationship("Account", back_populates="owner", cascade="all, delete-orphan")

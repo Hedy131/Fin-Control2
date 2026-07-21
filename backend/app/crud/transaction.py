@@ -2,7 +2,7 @@ from datetime import date, datetime
 from typing import Optional
 
 from sqlalchemy import func, or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.transaction import Transaction
 from app.models.category import Category
@@ -142,6 +142,27 @@ def get_transactions_summary(
             }
         )
     return result
+
+
+def get_transactions_for_export(
+    db: Session,
+    user_id: int,
+    start_date: date,
+    end_date: date,
+    account_id: Optional[int] = None,
+    category_id: Optional[int] = None,
+    type: Optional[TransactionType] = None,
+):
+    query = _build_filtered_query(db, user_id, account_id, category_id, type, None, start_date, end_date)
+    return (
+        query.options(
+            joinedload(Transaction.account),
+            joinedload(Transaction.destination_account),
+            joinedload(Transaction.category),
+        )
+        .order_by(Transaction.date.asc(), Transaction.time.asc().nullslast(), Transaction.id.asc())
+        .all()
+    )
 
 
 def get_transaction(db: Session, user_id: int, transaction_id: int):

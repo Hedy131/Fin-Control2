@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Literal
+from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -18,6 +18,7 @@ from app.crud.period import (
     get_last_n_periods,
     get_transactions_grouped_by_date,
     get_transfer_destination_rows,
+    resolve_period_end,
     bucket_by_period,
 )
 from app.crud.aggregates import group_amounts_by_currency
@@ -62,6 +63,8 @@ def _balance_rows(income_rows, expense_rows, investment_rows, savings_rows, tran
 @router.get("/summary", response_model=DashboardSummary)
 def get_summary(
     range: Literal["month", "last_month", "year"] = "month",
+    period_start: Optional[date] = None,
+    year: Optional[int] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -71,7 +74,11 @@ def get_summary(
     current = periods[-1]
     today = date.today()
 
-    if range == "last_month":
+    if period_start is not None:
+        target_period = Period(start=period_start, end=resolve_period_end(db, current_user.id, period_start))
+    elif year is not None:
+        target_period = Period(start=date(year, 1, 1), end=None if year == today.year else date(year, 12, 31))
+    elif range == "last_month":
         target_period = periods[-2] if len(periods) >= 2 else periods[-1]
     elif range == "year":
         target_period = Period(start=date(today.year, 1, 1), end=None)

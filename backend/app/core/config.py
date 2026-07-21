@@ -15,6 +15,13 @@ class Settings(BaseSettings):
 
     APP_PIN: str = "1234"
 
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM: str = ""
+    RECOVERY_EMAIL: str = "hedy131.hg@hotmail.com"
+
     BACKEND_CORS_ORIGINS: str = '["http://localhost:5173","http://localhost:3000"]'
 
     @property

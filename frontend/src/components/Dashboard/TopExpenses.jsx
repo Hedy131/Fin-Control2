@@ -6,20 +6,20 @@ import { listCategories } from '../../api/categories.js'
 import CategoryAvatar from '../Common/CategoryAvatar.jsx'
 import Card from '../Common/Card.jsx'
 import { formatCurrency } from '../../utils/currency.js'
-import { TYPE_COLOR } from '../../utils/categoryTypes.js'
 
-export default function RecentTransactions({ periodStart, periodEnd }) {
+export default function TopExpenses({ periodStart, periodEnd }) {
   const [transactions, setTransactions] = useState(null)
   const [accounts, setAccounts] = useState([])
   const [categories, setCategories] = useState([])
 
   useEffect(() => {
     setTransactions(null)
-    const params = { limit: 5 }
+    const params = { type: 'expense', limit: 500 }
     if (periodStart) params.start_date = periodStart
     if (periodEnd) params.end_date = periodEnd
     Promise.all([listTransactions(params), listAccounts(), listCategories()]).then(([t, a, c]) => {
-      setTransactions(t)
+      const top = [...t].sort((x, y) => (y.amount || 0) - (x.amount || 0)).slice(0, 5)
+      setTransactions(top)
       setAccounts(a)
       setCategories(c)
     })
@@ -31,7 +31,7 @@ export default function RecentTransactions({ periodStart, periodEnd }) {
   return (
     <Card className="h-full">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-base font-semibold text-gray-700">Transações Recentes</p>
+        <p className="text-base font-semibold text-gray-700">Maiores Despesas</p>
         <Link to="/transactions" className="text-sm text-primary-600 hover:text-primary-700">
           Ver todas
         </Link>
@@ -39,7 +39,7 @@ export default function RecentTransactions({ periodStart, periodEnd }) {
       {transactions === null ? (
         <p className="text-sm text-gray-400">A carregar...</p>
       ) : transactions.length === 0 ? (
-        <p className="text-sm text-gray-400">Sem transações ainda.</p>
+        <p className="text-sm text-gray-400">Sem despesas neste período.</p>
       ) : (
         <div className="space-y-3">
           {transactions.map((t) => {
@@ -53,9 +53,8 @@ export default function RecentTransactions({ periodStart, periodEnd }) {
                   </p>
                   <p className="text-sm text-gray-400">{t.date}</p>
                 </div>
-                <p className={`text-base font-medium whitespace-nowrap ${TYPE_COLOR[t.type]}`}>
-                  {['expense', 'investment', 'savings'].includes(t.type) ? '-' : ''}
-                  {formatCurrency(t.amount, src?.currency)}
+                <p className="text-base font-medium whitespace-nowrap text-red-600">
+                  -{formatCurrency(t.amount, src?.currency)}
                 </p>
               </div>
             )
