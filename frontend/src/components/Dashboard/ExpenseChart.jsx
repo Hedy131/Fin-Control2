@@ -6,23 +6,15 @@ export default function ExpenseChart({ data }) {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={280}>
+    <ResponsiveContainer width="100%" height={220}>
       <PieChart>
-        <Pie
-          data={data}
-          dataKey="total"
-          nameKey="category_name"
-          cx="50%"
-          cy="50%"
-          outerRadius={90}
-          label={(entry) => `${entry.category_name} (${Math.round((entry.percent || 0) * 100)}%)`}
-        >
+        <Pie data={data} dataKey="total" nameKey="category_name" cx="50%" cy="50%" outerRadius={70}>
           {data.map((entry, index) => (
             <Cell key={index} fill={entry.color || '#6366f1'} />
           ))}
         </Pie>
         <Tooltip />
-        <Legend />
+        <Legend wrapperStyle={{ fontSize: 11 }} />
       </PieChart>
     </ResponsiveContainer>
   )

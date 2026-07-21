@@ -1,41 +1,55 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { listBudgets } from '../../api/budgets.js'
+import { listCategories } from '../../api/categories.js'
 import ProgressBar from '../Common/ProgressBar.jsx'
 import Card from '../Common/Card.jsx'
 
 export default function BudgetsMiniSummary() {
   const [budgets, setBudgets] = useState(null)
+  const [categories, setCategories] = useState([])
   const navigate = useNavigate()
 
   useEffect(() => {
-    listBudgets().then(setBudgets)
+    Promise.all([listBudgets(), listCategories()]).then(([b, c]) => {
+      setBudgets(b)
+      setCategories(c)
+    })
   }, [])
+
+  const categoryName = (id) => categories.find((c) => c.id === id)?.name || '-'
+
+  const top3 = (budgets || [])
+    .filter((b) => b.amount > 0)
+    .sort((a, b) => b.spent / b.amount - a.spent / a.amount)
+    .slice(0, 3)
 
   return (
     <Card onClick={() => navigate('/budgets')} className="h-full">
-      <p className="text-sm text-gray-500">Orçamentos</p>
+      <p className="text-sm text-gray-500 mb-3">Orçamentos perto do limite</p>
       {budgets === null ? (
-        <p className="text-sm text-gray-400 mt-3">A carregar...</p>
+        <p className="text-sm text-gray-400">A carregar...</p>
       ) : budgets.length === 0 ? (
-        <p className="text-sm text-gray-400 mt-3">Sem categorias de despesa cadastradas ainda.</p>
+        <p className="text-sm text-gray-400">Sem categorias de despesa cadastradas ainda.</p>
+      ) : top3.length === 0 ? (
+        <p className="text-sm text-gray-400">Sem limites definidos ainda.</p>
       ) : (
-        (() => {
-          const withinCount = budgets.filter((b) => b.spent <= b.amount).length
-          const totalAmount = budgets.reduce((sum, b) => sum + (b.amount || 0), 0)
-          const totalSpent = budgets.reduce((sum, b) => sum + (b.spent || 0), 0)
-          const pct = totalAmount > 0 ? (totalSpent / totalAmount) * 100 : 0
-          return (
-            <>
-              <p className="text-2xl font-bold text-gray-900 mt-1">
-                {withinCount} de {budgets.length} dentro do limite
-              </p>
-              <div className="mt-4">
+        <div className="space-y-2.5">
+          {top3.map((b) => {
+            const pct = b.amount > 0 ? (b.spent / b.amount) * 100 : 0
+            return (
+              <div key={b.id}>
+                <div className="flex justify-between text-xs text-gray-600 mb-1">
+                  <span className="truncate">{categoryName(b.category_id)}</span>
+                  <span className={pct > 100 ? 'text-red-600 font-semibold' : 'text-gray-500'}>
+                    {Math.round(pct)}%
+                  </span>
+                </div>
                 <ProgressBar percent={pct} />
               </div>
-            </>
-          )
-        })()
+            )
+          })}
+        </div>
       )}
     </Card>
   )
