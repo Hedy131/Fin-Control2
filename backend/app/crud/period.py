@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from typing import List, Optional
 
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from app.models.transaction import Transaction
 from app.models.category import Category
@@ -191,6 +191,29 @@ def get_transactions_grouped_by_date(
     if cross_currency_transfers_only:
         query = query.filter(Transaction.destination_amount.isnot(None))
     rows = query.group_by(Account.currency, Transaction.date).all()
+    return [(c.value if hasattr(c, "value") else c, d, round(amount or 0.0, 2)) for c, d, amount in rows]
+
+
+def get_transfer_destination_rows(db: Session, user_id: int, since: date) -> List[tuple]:
+    """[(currency_code, date, total)] for the destination side of ALL transfers since
+    `since`, grouped by destination account currency and date. Uses destination_amount
+    when set (cross-currency transfer), falling back to amount (same-currency transfer)."""
+    dest_account = aliased(Account)
+    query = (
+        db.query(
+            dest_account.currency,
+            Transaction.date,
+            func.coalesce(func.sum(func.coalesce(Transaction.destination_amount, Transaction.amount)), 0.0),
+        )
+        .join(dest_account, Transaction.destination_account_id == dest_account.id)
+        .filter(
+            Transaction.user_id == user_id,
+            Transaction.type == TransactionType.transfer,
+            Transaction.date >= since,
+        )
+        .group_by(dest_account.currency, Transaction.date)
+    )
+    rows = query.all()
     return [(c.value if hasattr(c, "value") else c, d, round(amount or 0.0, 2)) for c, d, amount in rows]
 
 

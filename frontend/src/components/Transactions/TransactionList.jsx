@@ -1,8 +1,14 @@
-import { Fragment } from 'react'
+import { Fragment, useMemo, useState } from 'react'
+import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react'
 import { formatCurrency } from '../../utils/currency.js'
 import { TYPE_COLOR } from '../../utils/categoryTypes.js'
 import TransactionForm from './TransactionForm.jsx'
 import CategoryAvatar from '../Common/CategoryAvatar.jsx'
+
+function SortIcon({ active, dir }) {
+  if (!active) return <ChevronsUpDown size={12} className="text-gray-300" />
+  return dir === 'asc' ? <ChevronUp size={12} className="text-gray-600" /> : <ChevronDown size={12} className="text-gray-600" />
+}
 
 export default function TransactionList({
   transactions,
@@ -19,6 +25,29 @@ export default function TransactionList({
   onEditSubmit,
   onEditCancel,
 }) {
+  const [sort, setSort] = useState({ key: null, dir: 'desc' })
+
+  function toggleSort(key) {
+    setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' }))
+  }
+
+  const sorted = useMemo(() => {
+    if (!sort.key) return transactions
+    const copy = [...transactions]
+    copy.sort((a, b) => {
+      let result = 0
+      if (sort.key === 'date') {
+        const av = `${a.date}T${a.time || '00:00:00'}`
+        const bv = `${b.date}T${b.time || '00:00:00'}`
+        result = av < bv ? -1 : av > bv ? 1 : 0
+      } else if (sort.key === 'amount') {
+        result = (a.amount || 0) - (b.amount || 0)
+      }
+      return sort.dir === 'asc' ? result : -result
+    })
+    return copy
+  }, [transactions, sort])
+
   if (transactions.length === 0) {
     return <p className="text-sm text-gray-400">Nenhuma transação encontrada.</p>
   }
@@ -37,16 +66,26 @@ export default function TransactionList({
             <th className="text-left px-4 py-3 w-8">
               <input type="checkbox" checked={allSelected} onChange={(e) => onToggleSelectAll(e.target.checked)} />
             </th>
-            <th className="text-left px-4 py-3">Data</th>
+            <th className="text-left px-4 py-3 cursor-pointer select-none" onClick={() => toggleSort('date')}>
+              <span className="inline-flex items-center gap-1">
+                Data
+                <SortIcon active={sort.key === 'date'} dir={sort.dir} />
+              </span>
+            </th>
             <th className="text-left px-4 py-3">Descrição</th>
             <th className="text-left px-4 py-3">Conta</th>
             <th className="text-left px-4 py-3">Categoria</th>
-            <th className="text-right px-4 py-3">Valor</th>
+            <th className="text-right px-4 py-3 cursor-pointer select-none" onClick={() => toggleSort('amount')}>
+              <span className="inline-flex items-center justify-end gap-1">
+                Valor
+                <SortIcon active={sort.key === 'amount'} dir={sort.dir} />
+              </span>
+            </th>
             <th className="text-right px-4 py-3"></th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {transactions.map((t) => {
+          {sorted.map((t) => {
             const src = account(t.account_id)
             return (
               <Fragment key={t.id}>
