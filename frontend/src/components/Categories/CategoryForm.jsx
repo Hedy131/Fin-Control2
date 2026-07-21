@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { TRANSACTION_TYPES } from '../../utils/categoryTypes.js'
+import { CATEGORY_ICON_OPTIONS, getCategoryIcon } from '../../utils/categoryIcons.js'
 
 export default function CategoryForm({ initialValues, onSubmit, onCancel }) {
   const [name, setName] = useState(initialValues?.name || '')
   const [types, setTypes] = useState(initialValues?.types || ['expense'])
   const [isSalary, setIsSalary] = useState(initialValues?.is_salary || false)
   const [color, setColor] = useState(initialValues?.color || '#6366f1')
+  const [icon, setIcon] = useState(initialValues?.icon || 'tag')
 
   useEffect(() => {
     if (!types.includes('income') && isSalary) setIsSalary(false)
@@ -20,7 +22,7 @@ export default function CategoryForm({ initialValues, onSubmit, onCancel }) {
   function handleSubmit(e) {
     e.preventDefault()
     if (types.length === 0) return
-    onSubmit({ name, types, is_salary: isSalary, color, icon: initialValues?.icon || 'tag' })
+    onSubmit({ name, types, is_salary: isSalary, color, icon })
   }
 
   return (
@@ -67,6 +69,29 @@ export default function CategoryForm({ initialValues, onSubmit, onCancel }) {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Cor</label>
         <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-16 h-10 rounded-lg border border-gray-300" />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Ícone</label>
+        <div className="grid grid-cols-8 gap-2">
+          {CATEGORY_ICON_OPTIONS.map((opt) => {
+            const Icon = getCategoryIcon(opt.value)
+            const active = icon === opt.value
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                title={opt.label}
+                onClick={() => setIcon(opt.value)}
+                className={`flex items-center justify-center h-9 rounded-lg border transition-colors ${
+                  active ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                }`}
+                style={active ? { backgroundColor: color, borderColor: color } : undefined}
+              >
+                <Icon size={16} />
+              </button>
+            )
+          })}
+        </div>
       </div>
       <div className="flex justify-end gap-2 pt-2">
         <button type="button" onClick={onCancel} className="px-4 py-2 text-sm rounded-lg border border-gray-300">Cancelar</button>

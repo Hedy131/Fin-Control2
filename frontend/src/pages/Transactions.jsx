@@ -18,6 +18,7 @@ import BulkEditBar from '../components/Transactions/BulkEditBar.jsx'
 import ImportForm from '../components/Transactions/ImportForm.jsx'
 import ImportReview from '../components/Transactions/ImportReview.jsx'
 import Loading from '../components/Common/Loading.jsx'
+import { useNotifications } from '../context/NotificationContext.jsx'
 
 const EMPTY_FILTERS = {
   account_id: '',
@@ -30,6 +31,7 @@ const EMPTY_FILTERS = {
 
 export default function Transactions() {
   const [searchParams] = useSearchParams()
+  const { recheckBudgets } = useNotifications() || {}
   const [transactions, setTransactions] = useState([])
   const [accounts, setAccounts] = useState([])
   const [categories, setCategories] = useState([])
@@ -111,11 +113,13 @@ export default function Transactions() {
     if (!confirm(`Remover ${selectedIds.size} transações selecionadas?`)) return
     await bulkDeleteTransactions(Array.from(selectedIds))
     refreshTransactions()
+    recheckBudgets?.()
   }
 
   async function handleBulkUpdate(payload) {
     await bulkUpdateTransactions({ ids: Array.from(selectedIds), ...payload })
     refreshTransactions()
+    recheckBudgets?.()
   }
 
   function openCreateForm() {
@@ -153,12 +157,14 @@ export default function Transactions() {
     }
     closeForm()
     refreshTransactions()
+    recheckBudgets?.()
   }
 
   async function handleDelete(id) {
     if (!confirm('Remover esta transação?')) return
     await deleteTransaction(id)
     refreshTransactions()
+    recheckBudgets?.()
   }
 
   function openImport() {
@@ -180,6 +186,7 @@ export default function Transactions() {
   function handleImported() {
     closeImport()
     refreshTransactions()
+    recheckBudgets?.()
   }
 
   if (loading) return <Loading />

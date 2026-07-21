@@ -2,6 +2,7 @@ import { Fragment } from 'react'
 import { formatCurrency } from '../../utils/currency.js'
 import { TYPE_COLOR } from '../../utils/categoryTypes.js'
 import TransactionForm from './TransactionForm.jsx'
+import CategoryAvatar from '../Common/CategoryAvatar.jsx'
 
 export default function TransactionList({
   transactions,
@@ -24,7 +25,8 @@ export default function TransactionList({
 
   const account = (id) => accounts.find((a) => a.id === id)
   const accountName = (id) => account(id)?.name || '-'
-  const categoryName = (id) => categories.find((c) => c.id === id)?.name || '-'
+  const categoryFor = (id) => categories.find((c) => c.id === id)
+  const categoryName = (id) => categoryFor(id)?.name || '-'
   const allSelected = transactions.length > 0 && transactions.every((t) => selectedIds.has(t.id))
 
   return (
@@ -57,14 +59,19 @@ export default function TransactionList({
                     {t.time && <span className="text-gray-400"> {t.time.slice(0, 5)}</span>}
                   </td>
                   <td className="px-4 py-3 text-gray-900">
-                    {t.description || '-'}
-                    {t.type === 'transfer' && (
-                      <span className="block text-xs text-gray-400">
-                        → {accountName(t.destination_account_id)}
-                        {t.destination_amount != null &&
-                          ` (${formatCurrency(t.destination_amount, account(t.destination_account_id)?.currency)})`}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-3">
+                      <CategoryAvatar category={categoryFor(t.category_id)} description={t.description} size="sm" />
+                      <div>
+                        {t.description || '-'}
+                        {t.type === 'transfer' && (
+                          <span className="block text-xs text-gray-400">
+                            → {accountName(t.destination_account_id)}
+                            {t.destination_amount != null &&
+                              ` (${formatCurrency(t.destination_amount, account(t.destination_account_id)?.currency)})`}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-gray-600">{accountName(t.account_id)}</td>
                   <td className="px-4 py-3 text-gray-600">{categoryName(t.category_id)}</td>

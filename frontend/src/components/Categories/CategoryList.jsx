@@ -1,4 +1,5 @@
 import { TYPE_LABEL } from '../../utils/categoryTypes.js'
+import CategoryAvatar from '../Common/CategoryAvatar.jsx'
 
 export default function CategoryList({ categories, onEdit, onDelete }) {
   if (categories.length === 0) {
@@ -10,7 +11,7 @@ export default function CategoryList({ categories, onEdit, onDelete }) {
       {categories.map((cat) => (
         <div key={cat.id} className="flex items-center justify-between px-5 py-3">
           <div className="flex items-center gap-3">
-            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
+            <CategoryAvatar category={cat} size="sm" />
             <span className="text-sm font-medium text-gray-900">{cat.name}</span>
             <div className="flex gap-1">
               {cat.types.map((t) => (

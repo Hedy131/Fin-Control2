@@ -1,22 +1,34 @@
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import {
+  LayoutDashboard,
+  ArrowLeftRight,
+  Wallet,
+  TrendingUp,
+  Target,
+  Settings,
+  Lock,
+  CreditCard,
+  Tag,
+  ChevronRight,
+} from 'lucide-react'
 
 const links = [
-  { to: '/', label: 'Painel', end: true },
-  { to: '/transactions', label: 'Transações' },
-  { to: '/budgets', label: 'Orçamentos' },
-  { to: '/investimentos', label: 'Investimentos' },
-  { to: '/metas', label: 'Metas' },
+  { to: '/', label: 'Painel', end: true, Icon: LayoutDashboard },
+  { to: '/transactions', label: 'Transações', Icon: ArrowLeftRight },
+  { to: '/budgets', label: 'Orçamentos', Icon: Wallet },
+  { to: '/investimentos', label: 'Investimentos', Icon: TrendingUp },
+  { to: '/metas', label: 'Metas', Icon: Target },
 ]
 
 const settingsLinks = [
-  { to: '/configuracoes/senha', label: 'Senha' },
-  { to: '/accounts', label: 'Contas' },
-  { to: '/categories', label: 'Categorias' },
+  { to: '/configuracoes/senha', label: 'Senha', Icon: Lock },
+  { to: '/accounts', label: 'Contas', Icon: CreditCard },
+  { to: '/categories', label: 'Categorias', Icon: Tag },
 ]
 
 const linkClass = ({ isActive }) =>
-  `block px-3 py-2 rounded-lg text-sm font-medium transition ${
+  `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition ${
     isActive ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-100'
   }`
 
@@ -43,6 +55,7 @@ export default function Sidebar({ open, onClose }) {
           <nav className="flex-1 px-3 py-4 space-y-1">
             {links.map((link) => (
               <NavLink key={link.to} to={link.to} end={link.end} className={linkClass}>
+                <link.Icon size={17} />
                 {link.label}
               </NavLink>
             ))}
@@ -51,13 +64,17 @@ export default function Sidebar({ open, onClose }) {
               onClick={() => setSettingsOpen((v) => !v)}
               className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition"
             >
-              <span>Configurações</span>
-              <span className={`transition-transform ${settingsOpen ? 'rotate-90' : ''}`}>›</span>
+              <span className="flex items-center gap-2.5">
+                <Settings size={17} />
+                Configurações
+              </span>
+              <ChevronRight size={16} className={`transition-transform ${settingsOpen ? 'rotate-90' : ''}`} />
             </button>
             {settingsOpen && (
               <div className="pl-3 space-y-1 border-l border-gray-100 ml-3">
                 {settingsLinks.map((link) => (
                   <NavLink key={link.to} to={link.to} className={linkClass}>
+                    <link.Icon size={16} />
                     {link.label}
                   </NavLink>
                 ))}

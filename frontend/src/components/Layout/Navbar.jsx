@@ -1,4 +1,5 @@
 import { useAuth } from '../../context/AuthContext.jsx'
+import NotificationBell from '../Notifications/NotificationBell.jsx'
 
 export default function Navbar({ onToggleSidebar }) {
   const { logout } = useAuth()
@@ -14,10 +15,11 @@ export default function Navbar({ onToggleSidebar }) {
           <path d="M3 5h14M3 10h14M3 15h14" />
         </svg>
       </button>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
+        <NotificationBell />
         <button
           onClick={logout}
-          className="text-sm font-medium text-red-600 hover:text-red-700"
+          className="text-sm font-medium text-red-600 hover:text-red-700 ml-2"
         >
           Sair
         </button>
