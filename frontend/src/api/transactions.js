@@ -7,3 +7,4 @@ export const updateTransaction = async (id, payload) => (await api.put(`/transac
 export const deleteTransaction = async (id) => (await api.delete(`/transactions/${id}`)).data
 export const bulkDeleteTransactions = async (ids) => (await api.post('/transactions/bulk-delete', { ids })).data
 export const bulkUpdateTransactions = async (payload) => (await api.post('/transactions/bulk-update', payload)).data
+export const getDuplicateTransactions = async () => (await api.get('/transactions/duplicates')).data

@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Bell } from 'lucide-react'
 import { useNotifications } from '../../context/NotificationContext.jsx'
-import { formatCurrency } from '../../utils/currency.js'
 
 export default function NotificationBell() {
   const { alerts, unreadCount } = useNotifications() || {}
@@ -38,7 +37,7 @@ export default function NotificationBell() {
             <p className="text-sm font-semibold text-gray-900">Notificações</p>
           </div>
           {(!alerts || alerts.length === 0) ? (
-            <p className="px-4 py-6 text-sm text-gray-400 text-center">Sem orçamentos excedidos.</p>
+            <p className="px-4 py-6 text-sm text-gray-400 text-center">Sem alertas ativos.</p>
           ) : (
             <div className="max-h-72 overflow-y-auto divide-y divide-gray-100">
               {alerts.map((a) => (
@@ -46,12 +45,14 @@ export default function NotificationBell() {
                   key={a.id}
                   onClick={() => {
                     setOpen(false)
-                    navigate('/budgets')
+                    navigate(a.kind === 'duplicate' ? '/transactions' : '/budgets')
                   }}
                   className="w-full text-left px-4 py-3 hover:bg-gray-50"
                 >
-                  <p className="text-sm font-medium text-gray-900">{a.category_name}</p>
-                  <p className="text-xs text-red-600">{formatCurrency(a.excess)} acima do limite</p>
+                  <p className="text-sm font-medium text-gray-900">{a.title}</p>
+                  <p className={`text-xs ${a.kind === 'duplicate' ? 'text-amber-600' : 'text-red-600'}`}>
+                    {a.subtitle}
+                  </p>
                 </button>
               ))}
             </div>

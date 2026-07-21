@@ -4,10 +4,10 @@ export default function AllocationChart({ positions, categories }) {
   const categoryFor = (id) => categories.find((c) => c.id === id)
 
   const data = positions
-    .filter((p) => (p.current_value || 0) > 0)
+    .filter((p) => (p.invested_amount || 0) > 0)
     .map((p) => {
       const category = categoryFor(p.category_id)
-      return { name: category?.name || '-', total: p.current_value, color: category?.color || '#6366f1' }
+      return { name: category?.name || '-', total: p.invested_amount, color: category?.color || '#6366f1' }
     })
 
   if (data.length === 0) {

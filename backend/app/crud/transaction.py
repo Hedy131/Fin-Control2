@@ -230,3 +230,44 @@ def bulk_update_transactions(db: Session, user_id: int, ids: list[int], updates:
                 transaction.category_id = None
     db.commit()
     return len(transactions)
+
+
+def find_duplicate_groups(db: Session, user_id: int) -> list[dict]:
+    """Transactions that share account, category, type, amount, description and date —
+    the usual signature of an accidental double entry (e.g. an import run twice)."""
+    rows = (
+        db.query(
+            Transaction.account_id,
+            Transaction.category_id,
+            Transaction.type,
+            Transaction.amount,
+            Transaction.description,
+            Transaction.date,
+            func.count(Transaction.id),
+            func.array_agg(Transaction.id),
+        )
+        .filter(Transaction.user_id == user_id)
+        .group_by(
+            Transaction.account_id,
+            Transaction.category_id,
+            Transaction.type,
+            Transaction.amount,
+            Transaction.description,
+            Transaction.date,
+        )
+        .having(func.count(Transaction.id) > 1)
+        .all()
+    )
+    return [
+        {
+            "account_id": account_id,
+            "category_id": category_id,
+            "type": type_,
+            "amount": amount,
+            "description": description,
+            "date": date_,
+            "count": count,
+            "transaction_ids": sorted(ids),
+        }
+        for account_id, category_id, type_, amount, description, date_, count, ids in rows
+    ]

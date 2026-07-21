@@ -83,3 +83,18 @@ class TransactionBulkUpdateRequest(BaseModel):
 
 class TransactionBulkUpdateResponse(BaseModel):
     updated: int
+
+
+class DuplicateTransactionGroup(BaseModel):
+    account_id: int
+    category_id: Optional[int] = None
+    type: TransactionType
+    amount: float
+    description: Optional[str] = None
+    date: date_type
+    count: int
+    transaction_ids: List[int]
+
+
+class DuplicateTransactionsResponse(BaseModel):
+    groups: List[DuplicateTransactionGroup]

@@ -14,7 +14,7 @@ export default function ExpenseChart({ data }) {
           ))}
         </Pie>
         <Tooltip />
-        <Legend wrapperStyle={{ fontSize: 11 }} />
+        <Legend wrapperStyle={{ fontSize: 13 }} />
       </PieChart>
     </ResponsiveContainer>
   )

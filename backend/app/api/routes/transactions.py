@@ -16,6 +16,7 @@ from app.schemas.transaction import (
     TransactionBulkDeleteResponse,
     TransactionBulkUpdateRequest,
     TransactionBulkUpdateResponse,
+    DuplicateTransactionsResponse,
 )
 from app.crud import transaction as crud_transaction
 from app.crud import account as crud_account
@@ -57,6 +58,12 @@ def get_transactions_summary(
         db, current_user.id, account_id, category_id, type, search, start_date, end_date
     )
     return {"by_currency": by_currency}
+
+
+@router.get("/duplicates", response_model=DuplicateTransactionsResponse)
+def get_duplicate_transactions(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    groups = crud_transaction.find_duplicate_groups(db, current_user.id)
+    return {"groups": groups}
 
 
 @router.post("/bulk-delete", response_model=TransactionBulkDeleteResponse)

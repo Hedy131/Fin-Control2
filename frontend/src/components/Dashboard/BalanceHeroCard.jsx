@@ -23,19 +23,19 @@ export default function BalanceHeroCard({ summary, currency }) {
 
   return (
     <div className="rounded-2xl p-5 text-white bg-gradient-to-br from-primary-500 to-primary-700 shadow-sm">
-      <p className="text-xs text-primary-100">Saldo Total {currency}</p>
-      <p className="text-2xl font-bold mt-1">{formatCurrency(totalBalance, currency)}</p>
+      <p className="text-sm text-primary-100">Saldo Total {currency}</p>
+      <p className="text-3xl font-bold mt-1">{formatCurrency(totalBalance, currency)}</p>
       <div className="flex flex-wrap items-center gap-3 mt-3">
-        <div className="flex items-center gap-1 text-xs">
-          <ArrowUpRight size={14} className="text-green-300" />
+        <div className="flex items-center gap-1 text-sm">
+          <ArrowUpRight size={16} className="text-green-300" />
           {formatCurrency(periodIncome, currency)}
         </div>
-        <div className="flex items-center gap-1 text-xs">
-          <ArrowDownRight size={14} className="text-red-300" />
+        <div className="flex items-center gap-1 text-sm">
+          <ArrowDownRight size={16} className="text-red-300" />
           {formatCurrency(periodExpense, currency)}
         </div>
         {change != null && (
-          <span className={`text-[11px] font-semibold ${change >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+          <span className={`text-xs font-semibold ${change >= 0 ? 'text-green-300' : 'text-red-300'}`}>
             {change >= 0 ? '+' : ''}
             {change}%
           </span>

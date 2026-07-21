@@ -6,9 +6,13 @@ function amountLabel(byCurrency, key) {
   return parts.map((row) => formatCurrency(row[key], row.currency)).join(' + ')
 }
 
-function Card({ label, value, className }) {
+function Card({ label, value, className, tinted }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+    <div
+      className={`rounded-xl p-4 ${
+        tinted ? 'bg-primary-50 border border-primary-100' : 'bg-white border border-gray-100 shadow-sm'
+      }`}
+    >
       <p className="text-xs font-medium text-gray-400 mb-1">{label}</p>
       <p className={`text-lg font-bold ${className || 'text-gray-900'}`}>{value}</p>
     </div>
@@ -27,12 +31,12 @@ export default function BudgetOverview({ budgets, summary }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card label="Despesas" value={amountLabel(summary, 'expense')} className="text-red-600" />
-        <Card label="Investimentos" value={amountLabel(summary, 'investment')} className="text-blue-600" />
-        <Card label="Poupanças" value={amountLabel(summary, 'savings')} className="text-emerald-600" />
+        <Card label="Orçamento" value={formatCurrency(totalBudget)} tinted />
+        <Card label="Poupanças" value={amountLabel(summary, 'savings')} className="text-emerald-600" tinted />
+        <Card label="Investimentos" value={amountLabel(summary, 'investment')} className="text-blue-600" tinted />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card label="Orçamento" value={formatCurrency(totalBudget)} />
+        <Card label="Despesas" value={amountLabel(summary, 'expense')} className="text-red-600" />
         <Card label="Total Excedente" value={formatCurrency(totalExcess)} className="text-red-600" />
         <Card label="Total para Atingir o Limite" value={formatCurrency(totalRemaining)} className="text-green-600" />
         <Card

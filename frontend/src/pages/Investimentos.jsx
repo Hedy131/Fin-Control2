@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { listInvestmentPositions, updateInvestmentPosition } from '../api/investments.js'
+import { listInvestmentPositions } from '../api/investments.js'
 import { listCategories } from '../api/categories.js'
 import InvestmentList from '../components/Investments/InvestmentList.jsx'
 import AllocationChart from '../components/Investments/AllocationChart.jsx'
@@ -12,7 +12,7 @@ export default function Investimentos() {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
 
-  function refresh() {
+  useEffect(() => {
     setLoading(true)
     Promise.all([listInvestmentPositions(), listCategories()])
       .then(([p, c]) => {
@@ -20,14 +20,7 @@ export default function Investimentos() {
         setCategories(c)
       })
       .finally(() => setLoading(false))
-  }
-
-  useEffect(refresh, [])
-
-  async function handleSave(id, payload) {
-    await updateInvestmentPosition(id, payload)
-    refresh()
-  }
+  }, [])
 
   if (loading) return <Loading />
 
@@ -40,7 +33,9 @@ export default function Investimentos() {
         </p>
       )}
       <p className="text-xs text-gray-400">
-        As posições vêm das categorias de investimento e das transações lançadas nelas — para investir, lance uma transação em Transações.
+        As posições vêm das categorias de investimento e das transações lançadas nelas — para investir, lance uma
+        transação de investimento; para registar juros/dividendos, lance uma receita na mesma categoria. A moeda
+        segue a da conta usada.
       </p>
       <TotalsBar positions={positions} />
       <CurrencyConverter />
@@ -50,7 +45,7 @@ export default function Investimentos() {
           <AllocationChart positions={positions} categories={categories} />
         </div>
       )}
-      <InvestmentList positions={positions} categories={categories} onSave={handleSave} />
+      <InvestmentList positions={positions} categories={categories} />
     </div>
   )
 }

@@ -6,12 +6,14 @@ import { formatCurrency } from '../../utils/currency.js'
 
 function BudgetCard({ budget, categoryName, onSave }) {
   const navigate = useNavigate()
+  const [editing, setEditing] = useState(false)
   const [amount, setAmount] = useState(budget.amount)
   const pct = budget.amount > 0 ? (budget.spent / budget.amount) * 100 : 0
   const excess = budget.spent - budget.amount
 
   function handleBlur() {
     if (amount !== budget.amount) onSave(budget.id, amount || 0)
+    setEditing(false)
   }
 
   function handleOpen() {
@@ -24,16 +26,35 @@ function BudgetCard({ budget, categoryName, onSave }) {
   return (
     <div
       onClick={handleOpen}
-      className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 cursor-pointer transition-colors hover:bg-gray-50 hover:border-primary-200"
+      className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 cursor-pointer transition-colors hover:bg-gray-50 hover:border-primary-200"
     >
-      <p className="font-semibold text-gray-900 mb-3">{categoryName}</p>
+      <p className="font-semibold text-gray-900 mb-2 text-sm truncate" title={categoryName}>
+        {categoryName}
+      </p>
       <div className="mb-2">
         <ProgressBar percent={pct} excessText={excess > 0 ? `${formatCurrency(excess)} acima do limite` : null} />
       </div>
-      <p className="text-sm text-gray-600 mb-3">{formatCurrency(budget.spent)} gastos</p>
+      <p className="text-xs text-gray-600 mb-3">{formatCurrency(budget.spent)} gastos</p>
       <div onClick={(e) => e.stopPropagation()}>
-        <label className="block text-xs font-medium text-gray-500 mb-1">Valor Limite</label>
-        <CurrencyInput value={amount} onChange={setAmount} onBlur={handleBlur} />
+        <p className="text-xs font-medium text-gray-500 mb-1">Valor Limite</p>
+        {editing ? (
+          <CurrencyInput
+            value={amount}
+            onChange={setAmount}
+            onBlur={handleBlur}
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
+          />
+        ) : (
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-medium text-gray-900 truncate">{formatCurrency(budget.amount)}</span>
+            <button
+              onClick={() => setEditing(true)}
+              className="text-xs text-primary-600 hover:text-primary-700 font-medium shrink-0"
+            >
+              Editar
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -47,7 +68,7 @@ export default function BudgetList({ budgets, categories, onSave }) {
   const categoryName = (id) => categories.find((c) => c.id === id)?.name || '-'
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
       {budgets.map((b) => (
         <BudgetCard key={b.id} budget={b} categoryName={categoryName(b.category_id)} onSave={onSave} />
       ))}

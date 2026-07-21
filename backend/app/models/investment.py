@@ -17,7 +17,6 @@ class InvestmentPosition(Base):
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
     currency = Column(Enum(Currency), nullable=False, default=Currency.AOA)
     initial_invested_amount = Column(Float, nullable=False, default=0.0)
-    current_value = Column(Float, nullable=False, default=0.0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

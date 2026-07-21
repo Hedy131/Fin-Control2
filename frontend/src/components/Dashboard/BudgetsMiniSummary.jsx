@@ -26,7 +26,7 @@ export default function BudgetsMiniSummary() {
 
   return (
     <Card onClick={() => navigate('/budgets')} className="h-full">
-      <p className="text-sm text-gray-500 mb-3">Orçamentos perto do limite</p>
+      <p className="text-base text-gray-500 mb-3">Orçamentos perto do limite</p>
       {budgets === null ? (
         <p className="text-sm text-gray-400">A carregar...</p>
       ) : budgets.length === 0 ? (
@@ -34,12 +34,12 @@ export default function BudgetsMiniSummary() {
       ) : top3.length === 0 ? (
         <p className="text-sm text-gray-400">Sem limites definidos ainda.</p>
       ) : (
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           {top3.map((b) => {
             const pct = b.amount > 0 ? (b.spent / b.amount) * 100 : 0
             return (
               <div key={b.id}>
-                <div className="flex justify-between text-xs text-gray-600 mb-1">
+                <div className="flex justify-between text-sm text-gray-600 mb-1">
                   <span className="truncate">{categoryName(b.category_id)}</span>
                   <span className={pct > 100 ? 'text-red-600 font-semibold' : 'text-gray-500'}>
                     {Math.round(pct)}%

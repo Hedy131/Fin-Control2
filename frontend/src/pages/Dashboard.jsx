@@ -48,7 +48,7 @@ export default function Dashboard() {
         <RecentTransactions />
         <CompositionDonut summary={summary} />
         <Card>
-          <p className="text-sm font-semibold text-gray-700 mb-3">Despesas por Categoria</p>
+          <p className="text-base font-semibold text-gray-700 mb-3">Despesas por Categoria</p>
           <ExpenseChart data={summary.expenses_by_category} />
         </Card>
       </div>

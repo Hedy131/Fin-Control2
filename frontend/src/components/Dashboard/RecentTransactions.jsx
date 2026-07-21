@@ -27,8 +27,8 @@ export default function RecentTransactions() {
   return (
     <Card className="h-full">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm font-semibold text-gray-700">Transações Recentes</p>
-        <Link to="/transactions" className="text-xs text-primary-600 hover:text-primary-700">
+        <p className="text-base font-semibold text-gray-700">Transações Recentes</p>
+        <Link to="/transactions" className="text-sm text-primary-600 hover:text-primary-700">
           Ver todas
         </Link>
       </div>
@@ -44,12 +44,12 @@ export default function RecentTransactions() {
               <div key={t.id} className="flex items-center gap-3">
                 <CategoryAvatar category={categoryFor(t.category_id)} description={t.description} size="sm" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-900 truncate">
+                  <p className="text-base text-gray-900 truncate">
                     {t.description || categoryFor(t.category_id)?.name || '-'}
                   </p>
-                  <p className="text-xs text-gray-400">{t.date}</p>
+                  <p className="text-sm text-gray-400">{t.date}</p>
                 </div>
-                <p className={`text-sm font-medium whitespace-nowrap ${TYPE_COLOR[t.type]}`}>
+                <p className={`text-base font-medium whitespace-nowrap ${TYPE_COLOR[t.type]}`}>
                   {['expense', 'investment', 'savings'].includes(t.type) ? '-' : ''}
                   {formatCurrency(t.amount, src?.currency)}
                 </p>

@@ -17,7 +17,7 @@ export default function CompositionDonut({ summary }) {
 
   return (
     <Card>
-      <p className="text-sm font-semibold text-gray-700 mb-4">Composição do Período</p>
+      <p className="text-base font-semibold text-gray-700 mb-4">Composição do Período</p>
       {currencies.length === 0 ? (
         <p className="text-sm text-gray-400">Sem dados ainda.</p>
       ) : (
@@ -55,7 +55,7 @@ export default function CompositionDonut({ summary }) {
                 </ResponsiveContainer>
                 <div className="flex flex-wrap justify-center gap-3 mt-1">
                   {data.map((d) => (
-                    <span key={d.name} className="flex items-center gap-1.5 text-xs text-gray-500">
+                    <span key={d.name} className="flex items-center gap-1.5 text-sm text-gray-500">
                       <span className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color }} />
                       {d.name}
                     </span>
