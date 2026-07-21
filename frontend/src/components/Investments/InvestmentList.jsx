@@ -35,7 +35,7 @@ export default function InvestmentList({ positions, categories }) {
   const categoryFor = (id) => categories.find((c) => c.id === id)
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {positions.map((p) => (
         <PositionCard key={p.id} position={p} category={categoryFor(p.category_id)} />
       ))}

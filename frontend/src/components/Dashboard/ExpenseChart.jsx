@@ -6,9 +6,9 @@ export default function ExpenseChart({ data }) {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={220}>
+    <ResponsiveContainer width="100%" height={300}>
       <PieChart>
-        <Pie data={data} dataKey="total" nameKey="category_name" cx="50%" cy="50%" outerRadius={70}>
+        <Pie data={data} dataKey="total" nameKey="category_name" cx="50%" cy="50%" outerRadius={100}>
           {data.map((entry, index) => (
             <Cell key={index} fill={entry.color || '#6366f1'} />
           ))}

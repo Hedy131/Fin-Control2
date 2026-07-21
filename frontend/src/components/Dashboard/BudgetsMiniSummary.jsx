@@ -5,17 +5,20 @@ import { listCategories } from '../../api/categories.js'
 import ProgressBar from '../Common/ProgressBar.jsx'
 import Card from '../Common/Card.jsx'
 
-export default function BudgetsMiniSummary() {
+export default function BudgetsMiniSummary({ periodStart }) {
   const [budgets, setBudgets] = useState(null)
   const [categories, setCategories] = useState([])
   const navigate = useNavigate()
 
   useEffect(() => {
-    Promise.all([listBudgets(), listCategories()]).then(([b, c]) => {
-      setBudgets(b)
-      setCategories(c)
-    })
-  }, [])
+    setBudgets(null)
+    Promise.all([listBudgets(periodStart ? { period_start: periodStart } : {}), listCategories()]).then(
+      ([b, c]) => {
+        setBudgets(b)
+        setCategories(c)
+      }
+    )
+  }, [periodStart])
 
   const categoryName = (id) => categories.find((c) => c.id === id)?.name || '-'
 

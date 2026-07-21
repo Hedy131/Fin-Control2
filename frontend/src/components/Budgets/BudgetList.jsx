@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CurrencyInput from '../Common/CurrencyInput.jsx'
 import ProgressBar from '../Common/ProgressBar.jsx'
+import CategoryAvatar from '../Common/CategoryAvatar.jsx'
 import { formatCurrency } from '../../utils/currency.js'
 
-function BudgetCard({ budget, categoryName, onSave }) {
+function BudgetCard({ budget, category, onSave }) {
   const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
   const [amount, setAmount] = useState(budget.amount)
@@ -28,9 +29,12 @@ function BudgetCard({ budget, categoryName, onSave }) {
       onClick={handleOpen}
       className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 cursor-pointer transition-colors hover:bg-gray-50 hover:border-primary-200"
     >
-      <p className="font-semibold text-gray-900 mb-2 text-sm truncate" title={categoryName}>
-        {categoryName}
-      </p>
+      <div className="flex items-center gap-2 mb-2">
+        <CategoryAvatar category={category} size="sm" />
+        <p className="font-semibold text-gray-900 text-sm truncate" title={category?.name}>
+          {category?.name || '-'}
+        </p>
+      </div>
       <div className="mb-2">
         <ProgressBar percent={pct} excessText={excess > 0 ? `${formatCurrency(excess)} acima do limite` : null} />
       </div>
@@ -65,12 +69,12 @@ export default function BudgetList({ budgets, categories, onSave }) {
     return <p className="text-sm text-gray-400">Nenhuma categoria de despesa cadastrada ainda.</p>
   }
 
-  const categoryName = (id) => categories.find((c) => c.id === id)?.name || '-'
+  const categoryFor = (id) => categories.find((c) => c.id === id)
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
       {budgets.map((b) => (
-        <BudgetCard key={b.id} budget={b} categoryName={categoryName(b.category_id)} onSave={onSave} />
+        <BudgetCard key={b.id} budget={b} category={categoryFor(b.category_id)} onSave={onSave} />
       ))}
     </div>
   )

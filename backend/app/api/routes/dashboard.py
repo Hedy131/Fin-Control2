@@ -56,14 +56,6 @@ def get_summary(
     db: Session = Depends(get_db),
 ):
     accounts = db.query(Account).filter(Account.user_id == current_user.id).all()
-    balances = compute_balances_for_accounts(db, accounts)
-    balances_by_currency: dict = {}
-    for a in accounts:
-        currency = a.currency.value if hasattr(a.currency, "value") else a.currency
-        balances_by_currency[currency] = balances_by_currency.get(currency, 0.0) + balances.get(a.id, 0.0)
-    total_balance_by_currency = [
-        CurrencyBalance(currency=c, total=round(v, 2)) for c, v in balances_by_currency.items()
-    ]
 
     periods = get_last_n_periods(db, current_user.id, n=6)
     current = periods[-1]
@@ -75,6 +67,16 @@ def get_summary(
         target_period = Period(start=date(today.year, 1, 1), end=None)
     else:
         target_period = current
+
+    balance_as_of = target_period.end or today
+    balances = compute_balances_for_accounts(db, accounts, as_of=balance_as_of)
+    balances_by_currency: dict = {}
+    for a in accounts:
+        currency = a.currency.value if hasattr(a.currency, "value") else a.currency
+        balances_by_currency[currency] = balances_by_currency.get(currency, 0.0) + balances.get(a.id, 0.0)
+    total_balance_by_currency = [
+        CurrencyBalance(currency=c, total=round(v, 2)) for c, v in balances_by_currency.items()
+    ]
 
     since = min(periods[0].start, target_period.start)
 

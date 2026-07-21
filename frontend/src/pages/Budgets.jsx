@@ -7,8 +7,10 @@ import BudgetList from '../components/Budgets/BudgetList.jsx'
 import BudgetOverview from '../components/Budgets/BudgetOverview.jsx'
 import Loading from '../components/Common/Loading.jsx'
 import { formatPeriodLabel } from '../utils/period.js'
+import { useNotifications } from '../context/NotificationContext.jsx'
 
 export default function Budgets() {
+  const { recheckBudgets } = useNotifications() || {}
   const [budgets, setBudgets] = useState([])
   const [summary, setSummary] = useState([])
   const [categories, setCategories] = useState([])
@@ -47,6 +49,7 @@ export default function Budgets() {
   async function handleSave(id, amount) {
     await updateBudget(id, { amount }, periodStart ? { period_start: periodStart } : {})
     refreshBudgets(periods.find((p) => p.start === periodStart))
+    recheckBudgets?.()
   }
 
   if (loading) return <Loading />

@@ -17,6 +17,22 @@ export default function NotificationBell() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  function handleAlertClick(a) {
+    setOpen(false)
+    if (a.kind === 'duplicate' && a.meta) {
+      const params = new URLSearchParams({
+        period_start: a.meta.date,
+        period_end: a.meta.date,
+        duplicate_ids: a.meta.transactionIds.join(','),
+      })
+      navigate(`/transactions?${params.toString()}`)
+    } else if (a.kind === 'duplicate') {
+      navigate('/transactions')
+    } else {
+      navigate('/budgets')
+    }
+  }
+
   return (
     <div className="relative" ref={ref}>
       <button
@@ -43,10 +59,7 @@ export default function NotificationBell() {
               {alerts.map((a) => (
                 <button
                   key={a.id}
-                  onClick={() => {
-                    setOpen(false)
-                    navigate(a.kind === 'duplicate' ? '/transactions' : '/budgets')
-                  }}
+                  onClick={() => handleAlertClick(a)}
                   className="w-full text-left px-4 py-3 hover:bg-gray-50"
                 >
                   <p className="text-sm font-medium text-gray-900">{a.title}</p>

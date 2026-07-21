@@ -18,3 +18,13 @@ export function formatCurrency(amount, currencyCode = 'AOA') {
 export function currencyLabel(currencyCode) {
   return CURRENCIES.find((c) => c.code === currencyCode)?.label || currencyCode
 }
+
+const CURRENCY_ORDER = ['AOA', 'USD', 'EUR', 'BRL', 'CNY', 'JPY', 'ZAR', 'NAD', 'MZN', 'CHF']
+
+export function sortCurrencies(currencies) {
+  return [...currencies].sort((a, b) => {
+    const ai = CURRENCY_ORDER.indexOf(a)
+    const bi = CURRENCY_ORDER.indexOf(b)
+    return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
+  })
+}

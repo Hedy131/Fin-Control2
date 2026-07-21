@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getSummary } from '../api/dashboard.js'
+import { sortCurrencies } from '../utils/currency.js'
 import PeriodPills from '../components/Dashboard/PeriodPills.jsx'
 import BalanceHeroCard from '../components/Dashboard/BalanceHeroCard.jsx'
 import BudgetsMiniSummary from '../components/Dashboard/BudgetsMiniSummary.jsx'
@@ -28,7 +29,7 @@ export default function Dashboard() {
   if (error) return <p className="text-red-600 text-sm">{error}</p>
   if (!summary) return null
 
-  const currencies = summary.total_balance_by_currency.map((c) => c.currency)
+  const currencies = sortCurrencies(summary.total_balance_by_currency.map((c) => c.currency))
 
   return (
     <div className="space-y-4">
@@ -41,11 +42,11 @@ export default function Dashboard() {
         {currencies.map((currency) => (
           <BalanceHeroCard key={currency} summary={summary} currency={currency} />
         ))}
-        <BudgetsMiniSummary />
+        <BudgetsMiniSummary periodStart={summary.period_start} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <RecentTransactions />
+        <RecentTransactions periodStart={summary.period_start} periodEnd={summary.period_end} />
         <CompositionDonut summary={summary} />
         <Card>
           <p className="text-base font-semibold text-gray-700 mb-3">Despesas por Categoria</p>

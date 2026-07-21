@@ -81,33 +81,35 @@ def compute_balance(db: Session, account: Account) -> float:
     )
 
 
-def _grouped_sum(db: Session, account_ids: list, type: TransactionType, column="account_id") -> dict:
+def _grouped_sum(db: Session, account_ids: list, type: TransactionType, column="account_id", as_of=None) -> dict:
     if column == "account_id":
         filter_col = Transaction.account_id
         amount_expr = Transaction.amount
     else:
         filter_col = Transaction.destination_account_id
         amount_expr = func.coalesce(Transaction.destination_amount, Transaction.amount)
-    rows = (
-        db.query(filter_col, func.coalesce(func.sum(amount_expr), 0.0))
-        .filter(filter_col.in_(account_ids), Transaction.type == type)
-        .group_by(filter_col)
-        .all()
+    query = db.query(filter_col, func.coalesce(func.sum(amount_expr), 0.0)).filter(
+        filter_col.in_(account_ids), Transaction.type == type
     )
+    if as_of is not None:
+        query = query.filter(Transaction.date <= as_of)
+    rows = query.group_by(filter_col).all()
     return {account_id: amount for account_id, amount in rows}
 
 
-def compute_balances_for_accounts(db: Session, accounts: list) -> dict:
-    """Balance for every account in one batch (6 queries total instead of 6 per account)."""
+def compute_balances_for_accounts(db: Session, accounts: list, as_of=None) -> dict:
+    """Balance for every account in one batch (6 queries total instead of 6 per account).
+    `as_of`, if given, limits to transactions dated on or before that date — a
+    point-in-time balance instead of the live one."""
     ids = [a.id for a in accounts]
     if not ids:
         return {}
-    income = _grouped_sum(db, ids, TransactionType.income)
-    expense = _grouped_sum(db, ids, TransactionType.expense)
-    investment_out = _grouped_sum(db, ids, TransactionType.investment)
-    savings_out = _grouped_sum(db, ids, TransactionType.savings)
-    transfer_out = _grouped_sum(db, ids, TransactionType.transfer)
-    transfer_in = _grouped_sum(db, ids, TransactionType.transfer, column="destination_account_id")
+    income = _grouped_sum(db, ids, TransactionType.income, as_of=as_of)
+    expense = _grouped_sum(db, ids, TransactionType.expense, as_of=as_of)
+    investment_out = _grouped_sum(db, ids, TransactionType.investment, as_of=as_of)
+    savings_out = _grouped_sum(db, ids, TransactionType.savings, as_of=as_of)
+    transfer_out = _grouped_sum(db, ids, TransactionType.transfer, as_of=as_of)
+    transfer_in = _grouped_sum(db, ids, TransactionType.transfer, column="destination_account_id", as_of=as_of)
 
     return {
         a.id: round(

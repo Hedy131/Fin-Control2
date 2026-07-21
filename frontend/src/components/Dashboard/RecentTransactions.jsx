@@ -8,18 +8,22 @@ import Card from '../Common/Card.jsx'
 import { formatCurrency } from '../../utils/currency.js'
 import { TYPE_COLOR } from '../../utils/categoryTypes.js'
 
-export default function RecentTransactions() {
+export default function RecentTransactions({ periodStart, periodEnd }) {
   const [transactions, setTransactions] = useState(null)
   const [accounts, setAccounts] = useState([])
   const [categories, setCategories] = useState([])
 
   useEffect(() => {
-    Promise.all([listTransactions({ limit: 5 }), listAccounts(), listCategories()]).then(([t, a, c]) => {
+    setTransactions(null)
+    const params = { limit: 5 }
+    if (periodStart) params.start_date = periodStart
+    if (periodEnd) params.end_date = periodEnd
+    Promise.all([listTransactions(params), listAccounts(), listCategories()]).then(([t, a, c]) => {
       setTransactions(t)
       setAccounts(a)
       setCategories(c)
     })
-  }, [])
+  }, [periodStart, periodEnd])
 
   const account = (id) => accounts.find((a) => a.id === id)
   const categoryFor = (id) => categories.find((c) => c.id === id)

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   listTransactions,
@@ -53,6 +53,13 @@ export default function Transactions() {
   const [importStep, setImportStep] = useState(null) // null | 'upload' | 'review'
   const [importRows, setImportRows] = useState([])
   const [selectedIds, setSelectedIds] = useState(() => new Set())
+  const duplicateIds = useRef(
+    (searchParams.get('duplicate_ids') || '')
+      .split(',')
+      .map(Number)
+      .filter((n) => !Number.isNaN(n))
+  ).current
+  const appliedDuplicateSelectionRef = useRef(false)
 
   const refreshTransactions = useCallback(() => {
     const { account_id, category_id, type, start_date, end_date } = filters
@@ -65,7 +72,12 @@ export default function Transactions() {
 
     listTransactions(params).then((t) => {
       setTransactions(t)
-      setSelectedIds(new Set())
+      if (!appliedDuplicateSelectionRef.current && duplicateIds.length > 0) {
+        appliedDuplicateSelectionRef.current = true
+        setSelectedIds(new Set(t.filter((tx) => duplicateIds.includes(tx.id)).map((tx) => tx.id)))
+      } else {
+        setSelectedIds(new Set())
+      }
     })
   }, [filters])
 

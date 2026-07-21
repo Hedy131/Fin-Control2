@@ -3,9 +3,10 @@ import { listInvestmentPositions } from '../api/investments.js'
 import { listCategories } from '../api/categories.js'
 import InvestmentList from '../components/Investments/InvestmentList.jsx'
 import AllocationChart from '../components/Investments/AllocationChart.jsx'
-import TotalsBar from '../components/Investments/TotalsBar.jsx'
+import CurrencyTotalCard, { groupInvestmentTotals } from '../components/Investments/TotalsBar.jsx'
 import CurrencyConverter from '../components/Investments/CurrencyConverter.jsx'
 import Loading from '../components/Common/Loading.jsx'
+import { sortCurrencies } from '../utils/currency.js'
 
 export default function Investimentos() {
   const [positions, setPositions] = useState([])
@@ -24,6 +25,9 @@ export default function Investimentos() {
 
   if (loading) return <Loading />
 
+  const totalsByCurrency = groupInvestmentTotals(positions)
+  const currencies = sortCurrencies(Object.keys(totalsByCurrency))
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-gray-900">Investimentos</h2>
@@ -37,15 +41,23 @@ export default function Investimentos() {
         transação de investimento; para registar juros/dividendos, lance uma receita na mesma categoria. A moeda
         segue a da conta usada.
       </p>
-      <TotalsBar positions={positions} />
-      <CurrencyConverter />
-      {positions.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Alocação por Categoria</h3>
-          <AllocationChart positions={positions} categories={categories} />
-        </div>
-      )}
-      <InvestmentList positions={positions} categories={categories} />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {currencies.map((currency) => (
+          <CurrencyTotalCard key={currency} currency={currency} totals={totalsByCurrency[currency]} />
+        ))}
+        <CurrencyConverter />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <InvestmentList positions={positions} categories={categories} />
+        {positions.length > 0 && (
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <h3 className="text-sm font-semibold text-gray-700 mb-4">Alocação por Categoria</h3>
+            <AllocationChart positions={positions} categories={categories} />
+          </div>
+        )}
+      </div>
     </div>
   )
 }

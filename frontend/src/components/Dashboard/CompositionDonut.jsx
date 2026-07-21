@@ -43,9 +43,9 @@ export default function CompositionDonut({ summary }) {
             return (
               <div key={currency}>
                 {currencies.length > 1 && <p className="text-xs font-semibold text-gray-400 mb-2">{currency}</p>}
-                <ResponsiveContainer width="100%" height={200}>
+                <ResponsiveContainer width="100%" height={280}>
                   <PieChart>
-                    <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80}>
+                    <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={65} outerRadius={100}>
                       {data.map((entry, index) => (
                         <Cell key={index} fill={entry.color} />
                       ))}

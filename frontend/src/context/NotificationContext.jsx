@@ -8,8 +8,10 @@ import { formatCurrency } from '../utils/currency.js'
 
 const NotificationContext = createContext(null)
 const POLL_INTERVAL_MS = 60000
+const LOW_BUDGET_THRESHOLD = 30000
 const BUDGET_STORAGE_KEY = 'fincontrol_alerted_budgets'
 const DUPLICATE_STORAGE_KEY = 'fincontrol_alerted_duplicates'
+const LOW_BUDGET_STORAGE_KEY = 'fincontrol_alerted_low_budget'
 
 function loadSet(key) {
   try {
@@ -31,9 +33,11 @@ export function NotificationProvider({ children }) {
   const { user } = useAuth()
   const [budgetAlerts, setBudgetAlerts] = useState([])
   const [duplicateAlerts, setDuplicateAlerts] = useState([])
+  const [lowBudgetAlerts, setLowBudgetAlerts] = useState([])
   const [toast, setToast] = useState(null)
   const alertedBudgetsRef = useRef(loadSet(BUDGET_STORAGE_KEY))
   const alertedDuplicatesRef = useRef(loadSet(DUPLICATE_STORAGE_KEY))
+  const alertedLowBudgetRef = useRef(loadSet(LOW_BUDGET_STORAGE_KEY))
 
   const checkBudgets = useCallback(async () => {
     try {
@@ -64,6 +68,40 @@ export function NotificationProvider({ children }) {
           playAlertSound()
         }
       }
+
+      if (budgets.length > 0) {
+        const totalExcess = budgets.reduce((sum, b) => sum + Math.max(0, (b.spent || 0) - (b.amount || 0)), 0)
+        const totalRemaining = budgets.reduce((sum, b) => sum + Math.max(0, (b.amount || 0) - (b.spent || 0)), 0)
+        const availableToSpend = totalRemaining - totalExcess
+        const periodStart = budgets[0].period_start
+
+        if (availableToSpend < LOW_BUDGET_THRESHOLD) {
+          setLowBudgetAlerts([
+            {
+              id: `low-budget-${periodStart}`,
+              kind: 'low_budget',
+              title: 'Pouco dinheiro para gastar',
+              subtitle: `Só tem ${formatCurrency(availableToSpend)} disponível nos orçamentos deste período.`,
+            },
+          ])
+
+          if (!alertedLowBudgetRef.current.has(periodStart)) {
+            alertedLowBudgetRef.current.add(periodStart)
+            saveSet(LOW_BUDGET_STORAGE_KEY, alertedLowBudgetRef.current)
+            setToast({
+              id: `low-budget-${periodStart}`,
+              kind: 'low_budget',
+              title: 'Pouco dinheiro para gastar',
+              subtitle: `Só tem ${formatCurrency(availableToSpend)} disponível nos orçamentos deste período.`,
+            })
+            playAlertSound()
+          }
+        } else {
+          setLowBudgetAlerts([])
+        }
+      } else {
+        setLowBudgetAlerts([])
+      }
     } catch {
       // alerta é um extra — uma falha aqui nunca deve derrubar a app
     }
@@ -79,6 +117,7 @@ export function NotificationProvider({ children }) {
           kind: 'duplicate',
           title: g.description || 'Transação sem descrição',
           subtitle: `${g.count}x ${formatCurrency(g.amount)} em ${g.date}`,
+          meta: { transactionIds: g.transaction_ids, date: g.date },
         }))
       )
 
@@ -117,7 +156,7 @@ export function NotificationProvider({ children }) {
     setToast(null)
   }
 
-  const alerts = [...budgetAlerts, ...duplicateAlerts]
+  const alerts = [...budgetAlerts, ...lowBudgetAlerts, ...duplicateAlerts]
 
   return (
     <NotificationContext.Provider
