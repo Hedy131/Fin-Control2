@@ -1,5 +1,5 @@
 import { TRANSACTION_TYPES } from '../../utils/categoryTypes.js'
-import { formatPeriodLabel } from '../../utils/period.js'
+import { formatPeriodLabel, formatPeriodRange } from '../../utils/period.js'
 
 export default function TransactionFilters({ accounts, categories, periods, filters, onChange }) {
   function update(patch) {
@@ -26,7 +26,9 @@ export default function TransactionFilters({ accounts, categories, periods, filt
         <label className="block text-xs font-medium text-gray-500 mb-1">Período</label>
         <select value={filters.period_start} onChange={handlePeriodSelect} className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm">
           {periods.map((p) => (
-            <option key={p.start} value={p.start}>{formatPeriodLabel(p)}</option>
+            <option key={p.start} value={p.start}>
+              {formatPeriodLabel(p)} {p.start.slice(0, 4)} ({formatPeriodRange(p)})
+            </option>
           ))}
         </select>
       </div>

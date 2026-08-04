@@ -7,7 +7,7 @@ import BudgetList from '../components/Budgets/BudgetList.jsx'
 import BudgetOverview from '../components/Budgets/BudgetOverview.jsx'
 import BudgetBottomBar from '../components/Budgets/BudgetBottomBar.jsx'
 import Loading from '../components/Common/Loading.jsx'
-import { formatPeriodLabel } from '../utils/period.js'
+import { formatPeriodLabel, formatPeriodRange } from '../utils/period.js'
 import { useNotifications } from '../context/NotificationContext.jsx'
 
 export default function Budgets() {
@@ -65,7 +65,9 @@ export default function Budgets() {
           className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
         >
           {periods.map((p) => (
-            <option key={p.start} value={p.start}>{formatPeriodLabel(p)}</option>
+            <option key={p.start} value={p.start}>
+              {formatPeriodLabel(p)} {p.start.slice(0, 4)} ({formatPeriodRange(p)})
+            </option>
           ))}
         </select>
       </div>

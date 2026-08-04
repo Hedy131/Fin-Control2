@@ -29,3 +29,10 @@ export function formatPeriodShort(period) {
   const [, month, day] = period.start.split('-')
   return `${day}/${month}`
 }
+
+export function formatPeriodRange(period) {
+  if (!period) return ''
+  const start = formatDay(period.start).slice(0, 5)
+  const end = period.end ? formatDay(period.end).slice(0, 5) : 'em curso'
+  return `${start}–${end}`
+}

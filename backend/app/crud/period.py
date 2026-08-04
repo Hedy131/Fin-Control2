@@ -106,14 +106,24 @@ def get_last_n_periods(db: Session, user_id: int, n: int = 6, today: Optional[da
 def resolve_period_end(db: Session, user_id: int, period_start: date, today: Optional[date] = None) -> Optional[date]:
     """End date (inclusive) of the financial period starting at period_start, or None if ongoing."""
     today = today or date.today()
-    salary_dates = _salary_transaction_dates(db, user_id)
-    if period_start in salary_dates:
-        later = [d for d in salary_dates if d > period_start]
+    all_salary_dates = _salary_transaction_dates(db, user_id)
+    if period_start in all_salary_dates:
+        later = [d for d in all_salary_dates if d > period_start]
         return (later[0] - timedelta(days=1)) if later else None
     if period_start == _first_day_of_month(period_start):
         if _first_day_of_month(today) == period_start:
             return None
-        return _last_day_of_month(period_start)
+        end = _last_day_of_month(period_start)
+        # get_last_n_periods truncates the calendar-padding period right before the user's
+        # first-ever salary-tagged transaction (it ends the day before that transaction,
+        # not at the natural end of its calendar month) — mirror that here so a period_start
+        # picked from the periods list always resolves to the exact same end it was built with.
+        past_salary_dates = [d for d in all_salary_dates if d <= today]
+        if past_salary_dates:
+            first_salary = past_salary_dates[0]
+            if period_start < first_salary <= end:
+                end = first_salary - timedelta(days=1)
+        return end
     return None
 
 

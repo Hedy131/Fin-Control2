@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { listPeriods } from '../../api/periods.js'
-import { formatPeriodLabel } from '../../utils/period.js'
+import { formatPeriodLabel, formatPeriodRange } from '../../utils/period.js'
 
 const PRESETS = [
   { value: 'month', label: 'Este mês' },
@@ -44,7 +44,7 @@ export default function PeriodSelector({ value, onChange }) {
         <option value="">Escolher mês…</option>
         {[...periods].reverse().map((p) => (
           <option key={p.start} value={p.start}>
-            {formatPeriodLabel(p)} {p.start.slice(0, 4)}
+            {formatPeriodLabel(p)} {p.start.slice(0, 4)} ({formatPeriodRange(p)})
           </option>
         ))}
       </select>
