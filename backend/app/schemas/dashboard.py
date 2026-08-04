@@ -33,6 +33,7 @@ class DashboardSummary(BaseModel):
     period_expense_by_currency: List[CurrencyBalance]
     period_investment_by_currency: List[CurrencyBalance] = []
     period_savings_by_currency: List[CurrencyBalance] = []
+    period_cross_currency_transfer_by_currency: List[CurrencyBalance] = []
     period_balance_by_currency: List[CurrencyBalance]
     expenses_by_category: List[CategorySummary]
     period_trend: List[PeriodSummary]

@@ -25,6 +25,10 @@ from app.crud.aggregates import group_amounts_by_currency
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
+# Fixed anchor far enough back to cover any user's real transaction history, used to fetch
+# grouped rows once and bucket them both per-period (trend/month) and cumulatively (all-time).
+ALL_TIME_SINCE = date(2000, 1, 1)
+
 
 def _balance_rows(income_rows, expense_rows, investment_rows, savings_rows, transfer_out_rows, transfer_in_rows):
     income = group_amounts_by_currency(income_rows)
@@ -85,7 +89,7 @@ def get_summary(
     else:
         target_period = current
 
-    since = min(periods[0].start, target_period.start)
+    since = ALL_TIME_SINCE
 
     income_grouped = get_transactions_grouped_by_date(db, current_user.id, TransactionType.income, since)
     expense_grouped = get_transactions_grouped_by_date(db, current_user.id, TransactionType.expense, since)
@@ -93,6 +97,9 @@ def get_summary(
     savings_grouped = get_transactions_grouped_by_date(db, current_user.id, TransactionType.savings, since)
     transfer_out_grouped = get_transactions_grouped_by_date(db, current_user.id, TransactionType.transfer, since)
     transfer_in_grouped = get_transfer_destination_rows(db, current_user.id, since)
+    cross_transfer_out_grouped = get_transactions_grouped_by_date(
+        db, current_user.id, TransactionType.transfer, since, cross_currency_transfers_only=True
+    )
 
     def balance_for(period):
         return _balance_rows(
@@ -112,12 +119,20 @@ def get_summary(
         period_balance_by_currency,
     ) = balance_for(target_period)
 
-    # Saldo Total = Receita - Despesa - Poupanças - Investimentos - Transferências for the
-    # selected period; padded with a zero entry for any account currency that had no
-    # matching transactions this period, so every currency the user holds still gets a card.
+    period_cross_currency_transfer_by_currency = [
+        CurrencyBalance(currency=c, total=v) for c, v in bucket_by_period(cross_transfer_out_grouped, target_period)
+    ]
+
+    # Saldo Total accrues month over month: it's the same Receita - Despesa - Poupanças -
+    # Investimentos - Transferências formula as Saldo Mensal, but accumulated from the
+    # beginning of the user's history through the end of the selected period, instead of
+    # resetting every period. Padded with a zero entry for any account currency that had no
+    # transactions at all, so every currency the user holds still gets a card.
+    all_time_period = Period(start=ALL_TIME_SINCE, end=target_period.end)
+    *_, total_balance_rows = balance_for(all_time_period)
     account_currencies = {a.currency.value if hasattr(a.currency, "value") else a.currency for a in accounts}
-    covered_currencies = {b.currency for b in period_balance_by_currency}
-    total_balance_by_currency = list(period_balance_by_currency) + [
+    covered_currencies = {b.currency for b in total_balance_rows}
+    total_balance_by_currency = list(total_balance_rows) + [
         CurrencyBalance(currency=c, total=0.0) for c in account_currencies - covered_currencies
     ]
 
@@ -160,6 +175,7 @@ def get_summary(
         period_expense_by_currency=period_expense_by_currency,
         period_investment_by_currency=period_investment_by_currency,
         period_savings_by_currency=period_savings_by_currency,
+        period_cross_currency_transfer_by_currency=period_cross_currency_transfer_by_currency,
         period_balance_by_currency=period_balance_by_currency,
         expenses_by_category=expenses_by_category,
         period_trend=period_trend,

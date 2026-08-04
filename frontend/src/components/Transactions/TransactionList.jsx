@@ -10,6 +10,22 @@ function SortIcon({ active, dir }) {
   return dir === 'asc' ? <ChevronUp size={12} className="text-gray-600" /> : <ChevronDown size={12} className="text-gray-600" />
 }
 
+function RowActions({ t, editingId, onDuplicate, onEdit, onEditCancel, onDelete, className }) {
+  return (
+    <div className={className}>
+      <button onClick={() => onDuplicate(t)} className="text-xs text-gray-500 hover:text-gray-700 mr-3">
+        Duplicar
+      </button>
+      <button onClick={() => (editingId === t.id ? onEditCancel() : onEdit(t))} className="text-xs text-primary-600 hover:text-primary-700 mr-3">
+        {editingId === t.id ? 'Fechar' : 'Editar'}
+      </button>
+      <button onClick={() => onDelete(t.id)} className="text-xs text-red-500 hover:text-red-700">
+        Remover
+      </button>
+    </div>
+  )
+}
+
 export default function TransactionList({
   transactions,
   accounts,
@@ -26,6 +42,7 @@ export default function TransactionList({
   onEditCancel,
 }) {
   const [sort, setSort] = useState({ key: null, dir: 'desc' })
+  const [expandedId, setExpandedId] = useState(null)
 
   function toggleSort(key) {
     setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' }))
@@ -63,37 +80,41 @@ export default function TransactionList({
       <table className="w-full text-sm">
         <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
           <tr>
-            <th className="text-left px-4 py-3 w-8">
+            <th className="text-left px-4 py-3 w-8 hidden sm:table-cell">
               <input type="checkbox" checked={allSelected} onChange={(e) => onToggleSelectAll(e.target.checked)} />
             </th>
-            <th className="text-left px-4 py-3 cursor-pointer select-none" onClick={() => toggleSort('date')}>
+            <th className="text-left px-4 py-3 hidden sm:table-cell cursor-pointer select-none" onClick={() => toggleSort('date')}>
               <span className="inline-flex items-center gap-1">
                 Data
                 <SortIcon active={sort.key === 'date'} dir={sort.dir} />
               </span>
             </th>
             <th className="text-left px-4 py-3">Descrição</th>
-            <th className="text-left px-4 py-3">Conta</th>
-            <th className="text-left px-4 py-3">Categoria</th>
+            <th className="text-left px-4 py-3 hidden sm:table-cell">Conta</th>
+            <th className="text-left px-4 py-3 hidden sm:table-cell">Categoria</th>
             <th className="text-right px-4 py-3 cursor-pointer select-none" onClick={() => toggleSort('amount')}>
               <span className="inline-flex items-center justify-end gap-1">
                 Valor
                 <SortIcon active={sort.key === 'amount'} dir={sort.dir} />
               </span>
             </th>
-            <th className="text-right px-4 py-3"></th>
+            <th className="text-right px-4 py-3 hidden sm:table-cell"></th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
           {sorted.map((t) => {
             const src = account(t.account_id)
+            const isExpanded = expandedId === t.id
             return (
               <Fragment key={t.id}>
-                <tr className={selectedIds.has(t.id) ? 'bg-primary-50/40' : ''}>
-                  <td className="px-4 py-3">
+                <tr
+                  className={`sm:cursor-default cursor-pointer ${selectedIds.has(t.id) ? 'bg-primary-50/40' : ''}`}
+                  onClick={() => setExpandedId((id) => (id === t.id ? null : t.id))}
+                >
+                  <td className="px-4 py-3 hidden sm:table-cell" onClick={(e) => e.stopPropagation()}>
                     <input type="checkbox" checked={selectedIds.has(t.id)} onChange={() => onToggleSelect(t.id)} />
                   </td>
-                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap hidden sm:table-cell">
                     {t.date}
                     {t.time && <span className="text-gray-400"> {t.time.slice(0, 5)}</span>}
                   </td>
@@ -102,6 +123,7 @@ export default function TransactionList({
                       <CategoryAvatar category={categoryFor(t.category_id)} description={t.description} size="sm" />
                       <div>
                         {t.description || '-'}
+                        <span className="block text-xs text-gray-400 sm:hidden">{t.date}</span>
                         {t.type === 'transfer' && (
                           <span className="block text-xs text-gray-400">
                             → {accountName(t.destination_account_id)}
@@ -112,24 +134,42 @@ export default function TransactionList({
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{accountName(t.account_id)}</td>
-                  <td className="px-4 py-3 text-gray-600">{categoryName(t.category_id)}</td>
+                  <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{accountName(t.account_id)}</td>
+                  <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{categoryName(t.category_id)}</td>
                   <td className={`px-4 py-3 text-right font-medium whitespace-nowrap ${TYPE_COLOR[t.type]}`}>
                     {['expense', 'investment', 'savings'].includes(t.type) ? '-' : ''}
                     {formatCurrency(t.amount, src?.currency)}
                   </td>
-                  <td className="px-4 py-3 text-right whitespace-nowrap">
-                    <button onClick={() => onDuplicate(t)} className="text-xs text-gray-500 hover:text-gray-700 mr-3">
-                      Duplicar
-                    </button>
-                    <button onClick={() => (editingId === t.id ? onEditCancel() : onEdit(t))} className="text-xs text-primary-600 hover:text-primary-700 mr-3">
-                      {editingId === t.id ? 'Fechar' : 'Editar'}
-                    </button>
-                    <button onClick={() => onDelete(t.id)} className="text-xs text-red-500 hover:text-red-700">
-                      Remover
-                    </button>
+                  <td className="px-4 py-3 text-right whitespace-nowrap hidden sm:table-cell" onClick={(e) => e.stopPropagation()}>
+                    <RowActions
+                      t={t}
+                      editingId={editingId}
+                      onDuplicate={onDuplicate}
+                      onEdit={onEdit}
+                      onEditCancel={onEditCancel}
+                      onDelete={onDelete}
+                    />
                   </td>
                 </tr>
+                {isExpanded && editingId !== t.id && (
+                  <tr className="sm:hidden bg-gray-50" onClick={(e) => e.stopPropagation()}>
+                    <td colSpan={7} className="px-4 py-3 border-t border-gray-100">
+                      <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-500 mb-2">
+                        <span>Conta: <span className="text-gray-700 font-medium">{accountName(t.account_id)}</span></span>
+                        <span>Categoria: <span className="text-gray-700 font-medium">{categoryName(t.category_id)}</span></span>
+                      </div>
+                      <RowActions
+                        t={t}
+                        editingId={editingId}
+                        onDuplicate={onDuplicate}
+                        onEdit={onEdit}
+                        onEditCancel={onEditCancel}
+                        onDelete={onDelete}
+                        className="flex gap-4 [&_button]:text-sm"
+                      />
+                    </td>
+                  </tr>
+                )}
                 {editingId === t.id && (
                   <tr>
                     <td colSpan={7} className="bg-gray-50 px-4 py-4 border-t border-gray-100">
