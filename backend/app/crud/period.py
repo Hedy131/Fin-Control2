@@ -26,6 +26,16 @@ def _last_day_of_month(d: date) -> date:
     return next_month - timedelta(days=next_month.day)
 
 
+def _month_add(d: date, months: int) -> date:
+    """`d` shifted by `months`, keeping the same day-of-month (clamped to the target
+    month's length, e.g. the 31st of a month shifted into February becomes the 28th/29th)."""
+    total = d.month - 1 + months
+    year = d.year + total // 12
+    month = total % 12 + 1
+    day = min(d.day, _last_day_of_month(date(year, month, 1)).day)
+    return date(year, month, day)
+
+
 def _salary_transaction_dates(db: Session, user_id: int) -> List[date]:
     """Distinct dates of income transactions tagged to an is_salary category, ascending."""
     rows = (
@@ -76,8 +86,11 @@ def get_current_period(db: Session, user_id: int, today: Optional[date] = None) 
 
 def get_last_n_periods(db: Session, user_id: int, n: int = 6, today: Optional[date] = None) -> List[Period]:
     """Last n financial periods ending with the current (open-ended) one, oldest first.
-    Pads with calendar-month periods before the first real salary transaction so the
-    result always has length n."""
+    Periods before the first real salary transaction are extrapolated backward using the
+    same day-of-month as that first transaction (e.g. if the first salary landed on the
+    15th, earlier periods also run 15th-to-14th) — so "the month starts on salary day"
+    holds for every period, not just the ones with an actual salary transaction tagged.
+    Only falls back to plain calendar months when there is no salary date at all yet."""
     today = today or date.today()
     salary_dates = [d for d in _salary_transaction_dates(db, user_id) if d <= today]
 
@@ -90,40 +103,28 @@ def get_last_n_periods(db: Session, user_id: int, n: int = 6, today: Optional[da
 
     missing = n - len(real_periods)
     first_start = real_periods[0].start
-    pad_end_boundary = first_start - timedelta(days=1)
-    pads: List[Period] = []
-    for _ in range(missing):
-        pad_cursor = _first_day_of_month(pad_end_boundary)
-        if pad_cursor >= first_start:
-            break
-        pad_end = min(_last_day_of_month(pad_cursor), pad_end_boundary)
-        pads.append(Period(start=pad_cursor, end=pad_end))
-        pad_end_boundary = pad_cursor - timedelta(days=1)
-    pads.reverse()
+    pads: List[Period] = [
+        Period(start=_month_add(first_start, -i), end=_month_add(first_start, -i + 1) - timedelta(days=1))
+        for i in range(missing, 0, -1)
+    ]
     return (pads + real_periods)[-n:]
 
 
 def resolve_period_end(db: Session, user_id: int, period_start: date, today: Optional[date] = None) -> Optional[date]:
-    """End date (inclusive) of the financial period starting at period_start, or None if ongoing."""
+    """End date (inclusive) of the financial period starting at period_start, or None if
+    ongoing. Looked up directly from get_last_n_periods (generous lookback) so it always
+    matches exactly what was built there — a period_start coming from a periods dropdown
+    can never resolve to a different boundary than what the user was shown."""
     today = today or date.today()
-    all_salary_dates = _salary_transaction_dates(db, user_id)
-    if period_start in all_salary_dates:
-        later = [d for d in all_salary_dates if d > period_start]
-        return (later[0] - timedelta(days=1)) if later else None
+    for p in get_last_n_periods(db, user_id, n=120, today=today):
+        if p.start == period_start:
+            return p.end
+    # Not among the known periods (very old pick, or a raw date not sourced from the
+    # periods list) — best-effort calendar-month fallback.
     if period_start == _first_day_of_month(period_start):
         if _first_day_of_month(today) == period_start:
             return None
-        end = _last_day_of_month(period_start)
-        # get_last_n_periods truncates the calendar-padding period right before the user's
-        # first-ever salary-tagged transaction (it ends the day before that transaction,
-        # not at the natural end of its calendar month) — mirror that here so a period_start
-        # picked from the periods list always resolves to the exact same end it was built with.
-        past_salary_dates = [d for d in all_salary_dates if d <= today]
-        if past_salary_dates:
-            first_salary = past_salary_dates[0]
-            if period_start < first_salary <= end:
-                end = first_salary - timedelta(days=1)
-        return end
+        return _last_day_of_month(period_start)
     return None
 
 
