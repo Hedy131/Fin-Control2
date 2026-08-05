@@ -90,8 +90,8 @@ export default function Budgets() {
           Cadastre uma categoria de despesa para ela aparecer aqui como orçamento.
         </p>
       )}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div className="lg:col-span-3 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[33fr_7fr] gap-4">
+        <div className="space-y-6 min-w-0">
           <BudgetOverview budgets={budgets} summary={summary} />
           <BudgetList budgets={budgets} categories={categories} onSave={handleSave} highlightId={highlightId} />
         </div>
