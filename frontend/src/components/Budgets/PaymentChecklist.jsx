@@ -108,9 +108,9 @@ export default function PaymentChecklist({ categories, periodStart, periodEnd })
   const editingItem = typeof formMode === 'number' ? items.find((i) => i.id === formMode) : null
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 h-fit">
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 h-full flex flex-col">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-gray-700">Pagamentos do Mês</h3>
+        <h3 className="text-sm font-semibold text-gray-700">CheckList de Pagamentos</h3>
         {formMode === null && (
           <button
             onClick={() => setFormMode('new')}
@@ -146,7 +146,7 @@ export default function PaymentChecklist({ categories, periodStart, periodEnd })
         <p className="text-sm text-gray-400">Nenhum pagamento na lista ainda.</p>
       )}
 
-      <ul className="space-y-1">
+      <ul className="space-y-1 flex-1 overflow-y-auto">
         {items.map((item) => (
           <li key={item.id} className="group flex items-center gap-2 py-1.5">
             <span

@@ -91,12 +91,12 @@ export default function Budgets() {
         </p>
       )}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 space-y-6">
           <BudgetOverview budgets={budgets} summary={summary} />
+          <BudgetList budgets={budgets} categories={categories} onSave={handleSave} highlightId={highlightId} />
         </div>
         <PaymentChecklist categories={categories} periodStart={periodStart} periodEnd={periodEnd} />
       </div>
-      <BudgetList budgets={budgets} categories={categories} onSave={handleSave} highlightId={highlightId} />
       <BudgetBottomBar budgets={budgets} />
     </div>
   )
