@@ -17,6 +17,7 @@ from app.api.routes import (
     imports,
     fx,
     search,
+    payment_checklist,
 )
 from app import models  # noqa: F401  ensures models are registered before create_all
 
@@ -49,6 +50,7 @@ app.include_router(goals.router, prefix=settings.API_V1_STR)
 app.include_router(imports.router, prefix=settings.API_V1_STR)
 app.include_router(fx.router, prefix=settings.API_V1_STR)
 app.include_router(search.router, prefix=settings.API_V1_STR)
+app.include_router(payment_checklist.router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")

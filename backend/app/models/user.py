@@ -27,3 +27,6 @@ class User(Base):
     budgets = relationship("Budget", back_populates="owner", cascade="all, delete-orphan")
     investment_positions = relationship("InvestmentPosition", back_populates="owner", cascade="all, delete-orphan")
     goals = relationship("Goal", back_populates="owner", cascade="all, delete-orphan")
+    payment_checklist_items = relationship(
+        "PaymentChecklistItem", back_populates="owner", cascade="all, delete-orphan"
+    )

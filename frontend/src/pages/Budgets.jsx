@@ -6,6 +6,7 @@ import { listPeriods } from '../api/periods.js'
 import BudgetList from '../components/Budgets/BudgetList.jsx'
 import BudgetOverview from '../components/Budgets/BudgetOverview.jsx'
 import BudgetBottomBar from '../components/Budgets/BudgetBottomBar.jsx'
+import PaymentChecklist from '../components/Budgets/PaymentChecklist.jsx'
 import Loading from '../components/Common/Loading.jsx'
 import { formatPeriodLabel, formatPeriodRange } from '../utils/period.js'
 import { useNotifications } from '../context/NotificationContext.jsx'
@@ -21,6 +22,7 @@ export default function Budgets() {
   const [categories, setCategories] = useState([])
   const [periods, setPeriods] = useState([])
   const [periodStart, setPeriodStart] = useState('')
+  const [periodEnd, setPeriodEnd] = useState(null)
   const [loading, setLoading] = useState(true)
 
   const refreshBudgets = useCallback((period) => {
@@ -43,6 +45,7 @@ export default function Budgets() {
         // of always resetting to the current period
         const initial = sharedPeriodStart ? { start: sharedPeriodStart, end: sharedPeriodEnd } : p[p.length - 1]
         setPeriodStart(initial?.start || '')
+        setPeriodEnd(initial?.end ?? null)
         if (!sharedPeriodStart && initial) setResolvedPeriod(initial.start, initial.end ?? null)
         return refreshBudgets(initial)
       })
@@ -53,6 +56,7 @@ export default function Budgets() {
   function handlePeriodChange(start) {
     setPeriodStart(start)
     const matched = periods.find((p) => p.start === start)
+    setPeriodEnd(matched?.end ?? null)
     refreshBudgets(matched)
     setResolvedPeriod(start, matched?.end ?? null)
   }
@@ -86,7 +90,12 @@ export default function Budgets() {
           Cadastre uma categoria de despesa para ela aparecer aqui como orçamento.
         </p>
       )}
-      <BudgetOverview budgets={budgets} summary={summary} />
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div className="lg:col-span-3">
+          <BudgetOverview budgets={budgets} summary={summary} />
+        </div>
+        <PaymentChecklist categories={categories} periodStart={periodStart} periodEnd={periodEnd} />
+      </div>
       <BudgetList budgets={budgets} categories={categories} onSave={handleSave} highlightId={highlightId} />
       <BudgetBottomBar budgets={budgets} />
     </div>
