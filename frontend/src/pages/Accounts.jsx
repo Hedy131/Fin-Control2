@@ -3,8 +3,10 @@ import { listAccounts, createAccount, updateAccount, deleteAccount } from '../ap
 import AccountForm from '../components/Accounts/AccountForm.jsx'
 import AccountList from '../components/Accounts/AccountList.jsx'
 import Loading from '../components/Common/Loading.jsx'
+import useHighlightFromQuery from '../hooks/useHighlightFromQuery.js'
 
 export default function Accounts() {
+  const highlightId = useHighlightFromQuery()
   const [accounts, setAccounts] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -65,7 +67,7 @@ export default function Accounts() {
           />
         </div>
       )}
-      <AccountList accounts={accounts} onEdit={setEditingAccount} onDelete={handleDelete} />
+      <AccountList accounts={accounts} onEdit={setEditingAccount} onDelete={handleDelete} highlightId={highlightId} />
     </div>
   )
 }

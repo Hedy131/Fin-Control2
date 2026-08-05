@@ -21,7 +21,17 @@ export default function TransactionFilters({ accounts, categories, periods, filt
     : categories
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-500 mb-1">Pesquisar</label>
+        <input
+          type="text"
+          value={filters.search}
+          onChange={(e) => update({ search: e.target.value })}
+          placeholder="Descrição..."
+          className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
+        />
+      </div>
       <div>
         <label className="block text-xs font-medium text-gray-500 mb-1">Período</label>
         <select value={filters.period_start} onChange={handlePeriodSelect} className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm">

@@ -28,6 +28,7 @@ const EMPTY_FILTERS = {
   period_start: '',
   start_date: '',
   end_date: '',
+  search: '',
 }
 
 export default function Transactions() {
@@ -42,10 +43,12 @@ export default function Transactions() {
     const categoryId = searchParams.get('category_id')
     const periodStart = searchParams.get('period_start')
     const periodEnd = searchParams.get('period_end')
+    const search = searchParams.get('search')
     return {
       ...EMPTY_FILTERS,
       ...(categoryId ? { category_id: categoryId } : {}),
       ...(periodStart ? { period_start: periodStart, start_date: periodStart, end_date: periodEnd || '' } : {}),
+      ...(search ? { search } : {}),
     }
   })
   const [showForm, setShowForm] = useState(false)
@@ -64,13 +67,14 @@ export default function Transactions() {
   const appliedDuplicateSelectionRef = useRef(false)
 
   const refreshTransactions = useCallback(() => {
-    const { account_id, category_id, type, start_date, end_date } = filters
+    const { account_id, category_id, type, start_date, end_date, search } = filters
     const params = {}
     if (account_id) params.account_id = account_id
     if (category_id) params.category_id = category_id
     if (type) params.type = type
     if (start_date) params.start_date = start_date
     if (end_date) params.end_date = end_date
+    if (search) params.search = search
 
     listTransactions(params).then((t) => {
       setTransactions(t)
@@ -93,7 +97,11 @@ export default function Transactions() {
         const current = p[p.length - 1]
         if (current) {
           setFilters((f) =>
-            f.period_start ? f : { ...f, period_start: current.start, start_date: current.start, end_date: current.end || '' }
+            // a search coming from the global search bar should look across all periods,
+            // not just default to the current one
+            f.period_start || f.search
+              ? f
+              : { ...f, period_start: current.start, start_date: current.start, end_date: current.end || '' }
           )
         }
       })

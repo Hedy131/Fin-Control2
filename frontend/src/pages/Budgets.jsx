@@ -9,9 +9,11 @@ import BudgetBottomBar from '../components/Budgets/BudgetBottomBar.jsx'
 import Loading from '../components/Common/Loading.jsx'
 import { formatPeriodLabel, formatPeriodRange } from '../utils/period.js'
 import { useNotifications } from '../context/NotificationContext.jsx'
+import useHighlightFromQuery from '../hooks/useHighlightFromQuery.js'
 
 export default function Budgets() {
   const { recheckBudgets } = useNotifications() || {}
+  const highlightId = useHighlightFromQuery()
   const [budgets, setBudgets] = useState([])
   const [summary, setSummary] = useState([])
   const [categories, setCategories] = useState([])
@@ -77,7 +79,7 @@ export default function Budgets() {
         </p>
       )}
       <BudgetOverview budgets={budgets} summary={summary} />
-      <BudgetList budgets={budgets} categories={categories} onSave={handleSave} />
+      <BudgetList budgets={budgets} categories={categories} onSave={handleSave} highlightId={highlightId} />
       <BudgetBottomBar budgets={budgets} />
     </div>
   )

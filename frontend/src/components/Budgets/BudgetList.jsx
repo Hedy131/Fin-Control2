@@ -5,7 +5,7 @@ import ProgressBar from '../Common/ProgressBar.jsx'
 import CategoryAvatar from '../Common/CategoryAvatar.jsx'
 import { formatCurrency } from '../../utils/currency.js'
 
-function BudgetCard({ budget, category, onSave }) {
+function BudgetCard({ budget, category, onSave, highlighted }) {
   const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
   const [amount, setAmount] = useState(budget.amount)
@@ -26,8 +26,11 @@ function BudgetCard({ budget, category, onSave }) {
 
   return (
     <div
+      id={`hl-${budget.category_id}`}
       onClick={handleOpen}
-      className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 cursor-pointer transition-colors hover:bg-gray-50 hover:border-primary-200"
+      className={`bg-white rounded-xl border shadow-sm p-4 cursor-pointer transition-colors hover:bg-gray-50 hover:border-primary-200 ${
+        highlighted ? 'border-primary-400 ring-2 ring-primary-300' : 'border-gray-100'
+      }`}
     >
       <div className="flex items-center gap-2 mb-2">
         <CategoryAvatar category={category} size="sm" />
@@ -64,7 +67,7 @@ function BudgetCard({ budget, category, onSave }) {
   )
 }
 
-export default function BudgetList({ budgets, categories, onSave }) {
+export default function BudgetList({ budgets, categories, onSave, highlightId }) {
   if (budgets.length === 0) {
     return <p className="text-sm text-gray-400">Nenhuma categoria de despesa cadastrada ainda.</p>
   }
@@ -74,7 +77,13 @@ export default function BudgetList({ budgets, categories, onSave }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
       {budgets.map((b) => (
-        <BudgetCard key={b.id} budget={b} category={categoryFor(b.category_id)} onSave={onSave} />
+        <BudgetCard
+          key={b.id}
+          budget={b}
+          category={categoryFor(b.category_id)}
+          onSave={onSave}
+          highlighted={b.category_id === highlightId}
+        />
       ))}
     </div>
   )

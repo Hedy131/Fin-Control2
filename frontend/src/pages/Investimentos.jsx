@@ -7,8 +7,10 @@ import CurrencyTotalCard, { groupInvestmentTotals } from '../components/Investme
 import CurrencyConverter from '../components/Investments/CurrencyConverter.jsx'
 import Loading from '../components/Common/Loading.jsx'
 import { sortCurrencies } from '../utils/currency.js'
+import useHighlightFromQuery from '../hooks/useHighlightFromQuery.js'
 
 export default function Investimentos() {
+  const highlightId = useHighlightFromQuery()
   const [positions, setPositions] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
@@ -50,7 +52,7 @@ export default function Investimentos() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <InvestmentList positions={positions} categories={categories} />
+        <InvestmentList positions={positions} categories={categories} highlightId={highlightId} />
         {positions.length > 0 && (
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-4">Alocação por Categoria</h3>

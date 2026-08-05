@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { getSummary } from '../api/dashboard.js'
 import { sortCurrencies } from '../utils/currency.js'
 import PeriodSelector from '../components/Dashboard/PeriodSelector.jsx'
+import GlobalSearch from '../components/Dashboard/GlobalSearch.jsx'
 import BalanceHeroCard from '../components/Dashboard/BalanceHeroCard.jsx'
 import BudgetsMiniSummary from '../components/Dashboard/BudgetsMiniSummary.jsx'
 import TopExpenses from '../components/Dashboard/TopExpenses.jsx'
@@ -43,6 +44,8 @@ export default function Dashboard() {
         <h2 className="text-xl font-bold text-gray-900">Painel</h2>
         <PeriodSelector value={period} onChange={setPeriod} />
       </div>
+
+      <GlobalSearch />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {currencies.map((currency) => (

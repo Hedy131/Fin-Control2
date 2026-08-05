@@ -8,7 +8,7 @@ const TYPE_LABELS = {
   investment: 'Investimento',
 }
 
-export default function AccountList({ accounts, onEdit, onDelete }) {
+export default function AccountList({ accounts, onEdit, onDelete, highlightId }) {
   if (accounts.length === 0) {
     return <p className="text-sm text-gray-400">Nenhuma conta cadastrada.</p>
   }
@@ -16,7 +16,13 @@ export default function AccountList({ accounts, onEdit, onDelete }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {accounts.map((acc) => (
-        <div key={acc.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div
+          key={acc.id}
+          id={`hl-${acc.id}`}
+          className={`bg-white rounded-xl border shadow-sm p-5 ${
+            acc.id === highlightId ? 'border-primary-400 ring-2 ring-primary-300' : 'border-gray-100'
+          }`}
+        >
           <div className="flex justify-between items-start">
             <div>
               <p className="font-semibold text-gray-900">{acc.name}</p>

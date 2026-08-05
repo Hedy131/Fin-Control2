@@ -4,8 +4,10 @@ import { listCategories } from '../api/categories.js'
 import { listAccounts } from '../api/accounts.js'
 import GoalList from '../components/Goals/GoalList.jsx'
 import Loading from '../components/Common/Loading.jsx'
+import useHighlightFromQuery from '../hooks/useHighlightFromQuery.js'
 
 export default function Metas() {
+  const highlightId = useHighlightFromQuery()
   const [goals, setGoals] = useState([])
   const [categories, setCategories] = useState([])
   const [accounts, setAccounts] = useState([])
@@ -42,7 +44,7 @@ export default function Metas() {
       <p className="text-xs text-gray-400">
         O progresso vem de uma conta dedicada (se ligares uma) ou das transações lançadas nesta categoria em Transações.
       </p>
-      <GoalList goals={goals} categories={categories} accounts={accounts} onSave={handleSave} />
+      <GoalList goals={goals} categories={categories} accounts={accounts} onSave={handleSave} highlightId={highlightId} />
     </div>
   )
 }
