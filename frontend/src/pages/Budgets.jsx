@@ -9,10 +9,12 @@ import BudgetBottomBar from '../components/Budgets/BudgetBottomBar.jsx'
 import Loading from '../components/Common/Loading.jsx'
 import { formatPeriodLabel, formatPeriodRange } from '../utils/period.js'
 import { useNotifications } from '../context/NotificationContext.jsx'
+import { usePeriodContext } from '../context/PeriodContext.jsx'
 import useHighlightFromQuery from '../hooks/useHighlightFromQuery.js'
 
 export default function Budgets() {
   const { recheckBudgets } = useNotifications() || {}
+  const { periodStart: sharedPeriodStart, periodEnd: sharedPeriodEnd, setResolvedPeriod } = usePeriodContext()
   const highlightId = useHighlightFromQuery()
   const [budgets, setBudgets] = useState([])
   const [summary, setSummary] = useState([])
@@ -37,16 +39,22 @@ export default function Budgets() {
       .then(([c, p]) => {
         setCategories(c)
         setPeriods(p)
-        const current = p[p.length - 1]
-        setPeriodStart(current?.start || '')
-        return refreshBudgets(current)
+        // carry over whatever period was last selected on the Painel/outra página, instead
+        // of always resetting to the current period
+        const initial = sharedPeriodStart ? { start: sharedPeriodStart, end: sharedPeriodEnd } : p[p.length - 1]
+        setPeriodStart(initial?.start || '')
+        if (!sharedPeriodStart && initial) setResolvedPeriod(initial.start, initial.end ?? null)
+        return refreshBudgets(initial)
       })
       .finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshBudgets])
 
   function handlePeriodChange(start) {
     setPeriodStart(start)
-    refreshBudgets(periods.find((p) => p.start === start))
+    const matched = periods.find((p) => p.start === start)
+    refreshBudgets(matched)
+    setResolvedPeriod(start, matched?.end ?? null)
   }
 
   async function handleSave(id, amount) {

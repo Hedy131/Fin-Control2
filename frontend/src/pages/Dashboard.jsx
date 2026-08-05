@@ -10,6 +10,7 @@ import CompositionDonut from '../components/Dashboard/CompositionDonut.jsx'
 import ExpenseChart from '../components/Dashboard/ExpenseChart.jsx'
 import Card from '../components/Common/Card.jsx'
 import Loading from '../components/Common/Loading.jsx'
+import { usePeriodContext } from '../context/PeriodContext.jsx'
 
 function summaryParams(period) {
   if (period.type === 'period') return { period_start: period.value }
@@ -18,7 +19,7 @@ function summaryParams(period) {
 }
 
 export default function Dashboard() {
-  const [period, setPeriod] = useState({ type: 'preset', value: 'month' })
+  const { dashboardSelector: period, setDashboardSelector: setPeriod, setResolvedPeriod } = usePeriodContext()
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -27,7 +28,10 @@ export default function Dashboard() {
     setLoading(true)
     setError('')
     getSummary(summaryParams(period))
-      .then(setSummary)
+      .then((s) => {
+        setSummary(s)
+        setResolvedPeriod(s.period_start, s.period_end)
+      })
       .catch(() => setError('Não foi possível carregar o painel.'))
       .finally(() => setLoading(false))
   }, [period])

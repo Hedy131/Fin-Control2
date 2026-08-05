@@ -20,6 +20,7 @@ import ImportReview from '../components/Transactions/ImportReview.jsx'
 import ExportPanel from '../components/Transactions/ExportPanel.jsx'
 import Loading from '../components/Common/Loading.jsx'
 import { useNotifications } from '../context/NotificationContext.jsx'
+import { usePeriodContext } from '../context/PeriodContext.jsx'
 
 const EMPTY_FILTERS = {
   account_id: '',
@@ -34,6 +35,7 @@ const EMPTY_FILTERS = {
 export default function Transactions() {
   const [searchParams] = useSearchParams()
   const { recheckBudgets } = useNotifications() || {}
+  const { periodStart: sharedPeriodStart, periodEnd: sharedPeriodEnd, setResolvedPeriod } = usePeriodContext()
   const [transactions, setTransactions] = useState([])
   const [accounts, setAccounts] = useState([])
   const [categories, setCategories] = useState([])
@@ -94,14 +96,18 @@ export default function Transactions() {
         setAccounts(a)
         setCategories(c)
         setPeriods(p)
-        const current = p[p.length - 1]
-        if (current) {
+        // carry over whatever period was last selected on the Painel/outra página, falling
+        // back to the current period only if nothing was ever selected anywhere
+        const fallback = sharedPeriodStart
+          ? { start: sharedPeriodStart, end: sharedPeriodEnd || '' }
+          : p[p.length - 1]
+        if (fallback) {
           setFilters((f) =>
             // a search coming from the global search bar should look across all periods,
             // not just default to the current one
             f.period_start || f.search
               ? f
-              : { ...f, period_start: current.start, start_date: current.start, end_date: current.end || '' }
+              : { ...f, period_start: fallback.start, start_date: fallback.start, end_date: fallback.end || '' }
           )
         }
       })
@@ -111,6 +117,10 @@ export default function Transactions() {
   useEffect(() => {
     refreshTransactions()
   }, [refreshTransactions])
+
+  useEffect(() => {
+    if (filters.start_date) setResolvedPeriod(filters.start_date, filters.end_date || null)
+  }, [filters.start_date, filters.end_date])
 
   function toggleSelect(id) {
     setSelectedIds((current) => {
